@@ -81,13 +81,13 @@ chunker.cmx sanskrit.cmx order.cmx data.cmx
 
 ANNOTFLAGS = -annot -bin-annot
 
-COMPILE=ocamlopt -pp "camlp4rf" -I $(ZEN) -I +camlp4 -c	\
+COMPILE=ocamlfind ocamlopt -package camlp4.extend -pp "camlp4rf" -I $(ZEN) -I +camlp4 -c	\
 		$(ANNOTFLAGS)
 
-COMPILEI=ocamlc -pp "camlp4rf" -I $(ZEN) -I +camlp4 -c	\
+COMPILEI=ocamlfind ocamlc -package camlp4.extend -pp "camlp4rf" -I $(ZEN) -I +camlp4 -c	\
 		$(ANNOTFLAGS)
 
-LINK=ocamlopt -I $(ZEN) -I +camlp4 dynlink.cmxa camlp4lib.cmxa
+LINK=ocamlfind ocamlopt -package camlp4.extend -I $(ZEN) -I +camlp4 dynlink.cmxa camlp4lib.cmxa
 
 # standard installation of Sanskrit Heritage platform - assumes ZEN library
 

@@ -8,6 +8,9 @@
 # README                                        Copyright Gérard Huet 2018 #
 ############################################################################
 
+Personal fork of upstream: https://gitlab.inria.fr/huet/Heritage_Platform.git
+See project environment: https://github.com/darkone23/sanskrit-heritage
+
 This platform aims at computer treatment of Sanskrit, in view of diverse
 philological applications:
 - statistics on corpuses, stylistic analyses, vocabulary computations

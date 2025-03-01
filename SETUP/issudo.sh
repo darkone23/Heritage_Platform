@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# TODO: can test if: "can sudo" instead
 
 if [ `whoami` == "root" ]
 then
