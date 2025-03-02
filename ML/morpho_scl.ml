@@ -67,6 +67,7 @@ and print_scl_pr_mode_ps = fun
   ]
 and print_scl_tense = fun
   [ Future       -> ps "<fut/>"
+  | Future2      -> ps "<perfut/>"
   | Perfect      -> ps "<pft/>"
   | Aorist k     -> do { ps "<aor gana="; pr_scl_gana k; ps "/>" }
   | Injunctive k -> do { ps "<inj gana="; pr_scl_gana k; ps "/>" }
@@ -82,7 +83,7 @@ value print_scl_paradigm = fun
   | Presentm k pr -> do { print_scl_pr_mode pr; pr_scl_gana k; 
                           ps "/><md/>" }
   | Presentp pr   -> print_scl_pr_mode_ps pr
-  | Perfut v      -> ps "<perfut/>" (* TODO: mark voice *)
+(* OBS  | Perfut v      -> ps "<perfut/>" (* TODO: mark voice *) *)
   ]
 and print_scl_conjugation = fun 
   [ Primary      -> ()
@@ -107,14 +108,14 @@ and print_scl_nominal = fun
   ]
 and print_scl_invar = fun 
   [ Infi   -> ps "<inf/>" 
-  | Absoya -> ps "<abs/>"
+  | Absoya | Absotvaa | Namul -> ps "<abs/>" (* <lyap> <ktvaa> <namul> *)
   | Perpft -> ps "<perpft/>"
   ]
 and print_scl_kind = fun
   [ Part -> ps "<part/>"
   | Prep -> ps "<prep/>"
   | Conj -> ps "<conj/>"
-  | Abs  -> ps "<abs/>"
+  | Abs  -> ps "<abs/>" 
   | Adv  -> ps "<adv/>"
   | _    -> ps "<ind/>"
   ]
@@ -141,7 +142,6 @@ value print_scl_morph = fun
       }
   | Ind_form k -> print_scl_kind k
   | Avyayaf_form -> ps "<avya/>"
-  | Abs_root c   -> do { print_scl_conjugation c; ps "<abs/>" }
   | Gati    -> ps "<iiv/>"
   | Ind_verb m   -> print_scl_modal m
   | PV _         -> ps "<pv/>"
@@ -169,7 +169,7 @@ value print_inv_morpho_scl pe form generative (delta,morphs) =
       else pe stem
     ; ps "</morpho_gen>"
     }
-      ;
+;
 value print_scl_entry w = (* ps offline in WX notation for UoH interface *)
   ps ("<entry wx=\"" ^ Canon.decode_WX w ^ "\"/>")
 ;

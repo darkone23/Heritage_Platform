@@ -2,9 +2,9 @@
 (*                                                                        *)
 (*                     The Sanskrit Heritage Platform                     *)
 (*                                                                        *)
-(*                       Gérard Huet & Pawan Goyal                        *)
+(*              Gérard Huet & Pawan Goyal & Sriram Krishnan               *)
 (*                                                                        *)
-(* ©2020 Institut National de Recherche en Informatique et en Automatique *)
+(* ©2022 Institut National de Recherche en Informatique et en Automatique *)
 (**************************************************************************)
 
 (* module Web html = struct *)
@@ -48,8 +48,9 @@ and conjs_cgi      = cgi_bin Paths.cgi_conj       (* conjugations *)
 and lemmatizer_cgi = cgi_bin Paths.cgi_lemmatizer (* lemmatizer *) 
 and reader_cgi     = cgi_bin Paths.cgi_reader     (* reader *) 
 and parser_cgi     = cgi_bin Paths.cgi_parser     (* parser *) 
-and graph_cgi      = cgi_bin Paths.cgi_graph      (* summarizer graphical interface *) 
-and user_aid_cgi   = cgi_bin Paths.cgi_user_aid   (* unknown chunks processing *) 
+and graph_cgi      = cgi_bin Paths.cgi_graph      (* summary graph interface *) 
+and graph_cgi2     = cgi_bin Paths.cgi_graph2     (* same with best solutions *) 
+and user_aid_cgi   = cgi_bin Paths.cgi_user_aid   (* unknown chunks processing *)
 and sandhier_cgi       = cgi_bin Paths.cgi_sandhier   (* sandhier *) 
 and corpus_manager_cgi = cgi_bin Paths.cgi_corpus_manager (* Corpus manager *)
 and save_corpus_cgi    = cgi_bin Paths.cgi_save_corpus
@@ -276,30 +277,19 @@ value print_transliteration_switch id =
   transliteration_switch_default Paths.default_transliteration id |> pl
 ;
 value print_lexicon_select lexicon = do 
-  { "Lexicon Access " |> ps
+  { "Lexicon access " |> ps
   ; option_select_default "lex" 
-         [ ("    Heritage     ","SH","SH"=lexicon)  (* Sanskrit Heritage *)
-         ; (" Monier-Williams ","MW","MW"=lexicon)  (* Monier-Williams *)
-         ] |> pl
+      [ ("    Heritage     ","SH","SH"=lexicon)  (* Sanskrit Heritage *)
+      ; (" Monier-Williams ","MW","MW"=lexicon)  (* Monier-Williams *)
+      ] |> pl
   }
 ;
-value print_index_help lang = 
-  if narrow_screen then () else do
-  { par_begin G2 |> pl
-  ; html_break |> pl
-  ; "Search for an entry matching an initial pattern:" |> ps
-  ; html_break |> pl 
-  ; print_transliteration_help lang
-  ; par_end |> pl (* G2 *)
-  }
-;
-value print_dummy_help_en () = 
-  if narrow_screen then () else do
-  { par_begin G2 |> pl
-  ; "The simplified interface below allows search without diacritics" |> ps
-  ; html_break |> pl 
-  ; "Proper names may be entered with an initial capital" |> pl
-  ; par_end |> pl (* G2 *)
+value print_sanskrit_font_select dft = do
+  { " Sanskrit display font " |> ps
+  ; option_select_default "font"
+      [ ("   IAST   ","roma",dft="roma")  (* Indological romanisation in UTF-8 *)
+      ; ("Devanagari","deva",dft="deva")  (* Devanagari UTF-8 *)
+      ] |> pl
   }
 ;
 value print_stemmer_help_en () = 
@@ -334,29 +324,28 @@ and reader_page l = dico_page (dico_reader_page l)   (* [mk_reader_page]  *)
 and sandhi_page l = dico_page (dico_sandhi_page l)   (* [mk_sandhi_page]  *) 
 and corpus_page l = dico_page (dico_corpus_page l)   (* [mk_corpus_page]  *)
 ; 
-
 value print_site_map dyn lang = (* the various Web services of the site *)
   if dyn then do 
   { anchor_ref (sanskrit_page_url lang) (emph "Top") |> ps; " | " |> pl  
   ; anchor_ref (indexer_page_url lang) (emph "Index") |> ps; " | " |> pl 
-  ; anchor_ref (indexer_page_url lang ^ "#stemmer") (emph "Stemmer") |> ps; " | " |> pl
+(*[; anchor_ref (indexer_page_url lang ^ "#stemmer") (emph "Stemmer") |> ps; " | " |> pl] *)
   ; anchor_ref (grammar_page_url lang) (emph "Grammar") |> ps; " | " |> pl
-  ; anchor_ref (sandhi_page_url lang) (emph "Sandhi") |> ps; " | " |> pl
+  ; anchor_ref (sandhi_page_url lang) (emph "Sandhi") |> ps; " | " |> pl 
   ; anchor_ref (reader_page_url lang) (emph "Reader") |> ps; " | " |> pl
-  ; anchor_ref (corpus_page_url lang) (emph "Corpus") |> ps; " | " |> pl
-  ; anchor_ref (faq_page_url lang) (emph "Help") |> ps; " | " |> pl
-  ; anchor_ref (portal_page_url lang) (emph "Portal") |> pl
+  ; anchor_ref (corpus_page_url lang) (emph "Corpus") |> (* ps; " | " |> *) pl
+(*[; anchor_ref (faq_page_url lang) (emph "Help") |> ps; " | " |> pl 
+  ; anchor_ref (portal_page_url lang) (emph "Portal") |> pl] *)
   }
  else do
   { anchor_ref (rel_sanskrit_page_url lang) (emph "Top") |> ps; " | " |> pl
   ; anchor_ref (dico_index_page lang) (emph "Index") |> ps; " | " |> pl
-  ; anchor_ref (dico_index_page lang ^ "#stemmer") (emph "Stemmer") |> ps; " | " |> pl
+(*[; anchor_ref (dico_index_page lang ^ "#stemmer") (emph "Stemmer") |> ps; " | " |> pl] *)
   ; anchor_ref (dico_grammar_page lang) (emph "Grammar") |> ps; " | " |> pl
-  ; anchor_ref (dico_sandhi_page lang) (emph "Sandhi") |> ps; " | " |> pl
+  ; anchor_ref (dico_sandhi_page lang) (emph "Sandhi") |> ps; " | " |> pl 
   ; anchor_ref (dico_reader_page lang) (emph "Reader") |> ps; " | " |> pl
-  ; anchor_ref (dico_corpus_page lang) (emph "Corpus") |> ps; " | " |> pl
-  ; anchor_ref (rel_faq_page_url lang) (emph "Help") |> ps; " | " |> pl
-  ; anchor_ref (rel_portal_page_url lang) (emph "Portal") |> pl
+  ; anchor_ref (dico_corpus_page lang) (emph "Corpus") |> (* ps; " | " |> *) pl
+(*[; anchor_ref (rel_faq_page_url lang) (emph "Help") |> ps; " | " |> pl 
+  ; anchor_ref (rel_portal_page_url lang) (emph "Portal") |> pl] *)
   }
 ;
 value pad () = do (* ad-hoc vertical padding to make room for the bandeau *)
@@ -369,7 +358,7 @@ value pad () = do (* ad-hoc vertical padding to make room for the bandeau *)
   }
 ;
 value print_bandeau_enpied_dyn dyn lang color = do
-  { pad () (* necessary padding to avoid hiding by bandeau *)
+  { pad () (* ugly necessary padding to avoid hiding by bandeau *)
   ; elt_begin "div" Enpied |> pl
   ; table_begin Bandeau |> ps
   ; tr_begin |> ps (* main row begin *)
@@ -399,8 +388,8 @@ value print_bandeau_enpied_dyn dyn lang color = do
   ; xml_end "div" |> pl (* end Enpied *)
   }
 ;
-(* Simputer - legacy code - could be reused for smartphones *)
-value print_bandeau_entete color = 
+(* Simputer - legacy code - could be reused for smartphones ?
+[value print_bandeau_entete color = 
   let margin_bottom height = "margin-bottom:" ^ points height in
   let interval height = do 
     { tr_begin |> ps
@@ -418,7 +407,7 @@ value print_bandeau_entete color =
   ; interval 10
   ; table_end |> pl
   }
-;
+;] *)
 value page_end_dyn dyn lang bandeau = do 
   { match target with
     [ Simputer -> ()
@@ -456,15 +445,17 @@ value scl_toggle =
   not (SCLpaths.scl_url="") (* True if SCL tools are installed *)
 ;
 value interaction_modes_default mode =  
-  [ (" Summary ","g",mode="g") 
+  [ (" First ","f",mode="f") (* Was " The Best! " *)
+  ; (" Best ","b",mode="b") (* Was " Best n solutions " *)
+  (*; (" Best & List ","l",mode="l") - deprecated *)
+  ; (" All ","g",mode="g") (* Was " Summary " *)
   ; (" Tagging ","t",mode="t") 
   ; (" Parsing ","p",mode="p") 
   ] @ if scl_toggle then (* Needs the SCL tools *)
   [ (" Analysis ","o",mode="o") ] else []
 ;
-value interaction_modes = 
-  interaction_modes_default "g" (* default graph interface mode *)
-;
+(* V3.45: default "f" for First, replacing "g" for Summary renamed All *)
+
 value corpus_read_only =
   match target with
   [ Station -> False
@@ -522,10 +513,9 @@ value error_page title_str msg submsg = do
   ; abort default_language msg submsg
   }
 ;
-(* [invalid_corpus_mode_page expected_mode current_mode] generates an HTML on
-   [output_channel] to notify the user that the requested operation
-   on the corpus is available only in [expected_mode] and not in
-   [current_mode].  *)
+(* [invalid_corpus_permission_page expected_mode current_mode] generates an 
+   HTML on [output_channel] to notify the user that the requested operation on
+   the corpus is available only in [expected_mode] and not in [current_mode]. *)
 value invalid_corpus_permission_page expected current =
   error_page "Corpus Manager" "Invalid permission "
     ("Expected permission: " ^ expected ^ " | Current permission: " ^ current)

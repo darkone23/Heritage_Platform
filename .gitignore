@@ -25,6 +25,7 @@ ML/declension
 ML/indexer
 ML/indexerd
 ML/interface
+ML/interface2
 ML/lemmatizer
 ML/mk_corpus
 ML/mk_corpus_page
@@ -41,7 +42,8 @@ ML/sandhier
 ML/save_corpus
 ML/test_stamp
 ML/user_aid
-ZEN/
+
+ZEN
 ZEN/dagify
 ZEN/list_iso
 ZEN/make_english_lexicon

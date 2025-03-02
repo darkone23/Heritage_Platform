@@ -2,7 +2,7 @@
 (*                                                                        *)
 (*                     The Sanskrit Heritage Platform                     *)
 (*                                                                        *)
-(*                              Gérard Huet                               *)
+(*                      Gérard Huet & Sriram Krishnan                     *)
 (*                                                                        *)
 (* ©2021 Institut National de Recherche en Informatique et en Automatique *)
 (**************************************************************************)
@@ -185,6 +185,16 @@ value print_segment offset (phase,rword,transition) = do
       }
   }
 ; 
+(* Printing the segment with only the sentence 
+   without the phase and transition details *)
+value print_segment_words offset (phase,rword,transition) = do
+  { Morpho_html.print_signifiant_off rword offset 
+  ; if (ii_component phase) then ("-" |> ps)
+    else (" " |> ps)
+  ; let correction = process_transition transition in 
+    offset+correction+(length rword)
+  }
+;
 (* Similarly for [scl_plugin] mode (without offset and transitions) *)
 (* Called from [Scl_parser.print_scl_output] *)
 value print_scl_segment counter (phase,rword) =  
@@ -210,5 +220,42 @@ value print_scl_segment counter (phase,rword) =
   ; counter+1
   } 
 ; 
+(* Getting the inputs (segments and analysis) for invoking SCL's parser *)
+(* Called from [Scl_parser.print_scl_segmentation] *)
+value print_scl_segment_forms counter (phase,rword) =  
+  let word = Morpho_html.visargify rword in do
+  { let ic = string_of_int counter in
+    "<input type=\"hidden\" name=\"field" ^ ic ^ "\" value='<form wx=\""
+    ^ Canon.decode_WX word ^ "\"/>" |> ps
+  ; match tags_of phase (mirror rword) with 
+    [ Atomic tags ->
+          print_scl_tags [] phase word tags
+    | Preverbed (_,phase) pvs form tags -> 
+         let ok_tags = 
+           if pvs = [] then tags 
+           else trim_tags (generative phase) form (Canon.decode pvs) tags in
+         print_scl_tags pvs phase form ok_tags
+    ] 
+  ; "'>" |> ps (* closes <input *) 
+  ; counter+1
+  } 
+;
+(* Getting the form for the best segments *)
+(* Called from [Scl_parser.post_best_segments_scl] *)
+value best_segments_for_scl counter (phase,rword) =
+  let word = Morpho_html.visargify rword in do 
+  { "<form wx=\"" ^ Canon.decode_WX word ^ "\"/>" |> ps
+  ; match tags_of phase (mirror rword) with 
+    [ Atomic tags ->
+          print_scl_tags [] phase word tags
+    | Preverbed (_,phase) pvs form tags -> 
+         let ok_tags = 
+           if pvs = [] then tags 
+           else trim_tags (generative phase) form (Canon.decode pvs) tags in
+         print_scl_tags pvs phase form ok_tags
+    ] 
+  ; counter+1
+  }
+;
 end;
 

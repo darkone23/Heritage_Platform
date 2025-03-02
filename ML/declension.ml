@@ -19,7 +19,7 @@
 open Skt_morph;
 open Morphology; (* [Noun_form] etc. *)
 open Html; (* [narrow_screen html_red]  etc. *)
-open Web;  (* [ps pl font Deva Roma pr_font] etc. *)
+open Web;  (* [ps pl font Deva Roma pr_font abort] etc. *)
 open Cgi;  (* [create_env] etc. *)
 open Multilingual; (* [declension_title compound_name avyaya_name] *)
 
@@ -38,12 +38,13 @@ value prlist_font font =
   and bar () = html_green " | " in 
   List2.process_list_sep pr bar
 ;
-value display_subtitle title = do
+value display_subtitle title call_back = do
   { html_paragraph |> pl
   ; table_begin (centered Deep_sky) |> pl
   ; tr_begin |> ps
   ; th_begin |> ps
   ; title |> ps
+  ; call_back |> ps
   ; th_end |> ps 
   ; tr_end |> ps 
   ; table_end |> pl (* centered *)
@@ -164,10 +165,7 @@ value sort_out accu form = fun
               ]
         | Bare_stem | Gati -> (mas,fem,neu,any,[ f :: iic ],avya)
         | Avyayaf_form -> (mas,fem,neu,any,iic,[ f :: avya ])
-        | Ind_form _ | Verb_form _ _ _  | Ind_verb _ | Abs_root _ 
-        | Avyayai_form | Unanalysed | PV _ 
-        | Part_form _ _ _ _ ->
-          failwith "Unexpected form in declensions"
+        | _ -> failwith "Unexpected form in declensions"
         ]
      | _ -> failwith "Weird table"
      ]
@@ -278,15 +276,23 @@ value decls_engine () = do
     and url_encoded_participle = get "p" env ""
     and url_encoded_source = get "r" env ""
         (* optional root origin - used by participles in conjugation tables *)
-    and font = get "font" env Paths.default_display_font in 
+    and font = get "font" env Paths.default_display_font in
     let ft = font_of_string font (* Deva vs Roma print *) 
     and translit = get "t" env "VH" (* DICO created in VH trans *)
-    and lex = get "lex" env "SH" (* default Heritage *) in 
+    and lex = get "lex" env Paths.default_lexicon in 
     let entry_tr = decode_url url_encoded_entry (* : string in translit *)
-    and gender = gender_of (decode_url url_encoded_gender)
+    and gender = gender_of url_encoded_gender
     and part = decode_url url_encoded_participle
     and code = Encode.switch_code translit
     and lang = language_of_string lex 
+    (* Now we prepare a call-back for switching the font *)
+    and decl_url = Paths.cgi_dir_url ^ Paths.cgi_decl in
+    let invoke = decl_url ^ "?q=" ^ url_encoded_entry ^ ";g=" ^ url_encoded_gender 
+               ^ ";lex=" ^ lex
+               ^ ";font=" ^ (if ft=Deva then "roma" else "deva") ^ ";r=" ^ url_encoded_source
+               ^ ";p=" ^ url_encoded_participle ^ ";t=" ^ translit
+    and switch = if ft=Deva then "Roma" else "Deva" in
+    let call_back = anchor Blue_ invoke switch
     and (*source*) _ = decode_url url_encoded_source (* cascading from conjug *)
     and () = toggle_lexicon lex (* reference dictionary SH or MW *) 
     and () = toggle_sanskrit_font ft in
@@ -300,7 +306,7 @@ value decls_engine () = do
              (* We should check it is indeed a substantive entry 
                 and that Any is used for deictics/numbers (TODO) *)
              (* Also it should use unique naming for possible homo index *)
-          else Morpho_html.skt_html_font ft entry |> italics in
+          else doubt (Morpho_html.skt_html_font ft entry) in
 (*i DEPRECATED indication of root for kridanta
         [let root = if source = "" then "?" (* unknown in lexicon *)
                     else " from " ^ (* should test font *) in
@@ -308,7 +314,7 @@ value decls_engine () = do
          else doubt (Morpho_html.skt_roma source) in (* should test font *)
                Morpho_html.skt_utf font entry ^ root in] i*)
         let subtitle = hyperlink_title ft link in do
-        { display_subtitle (h1_center subtitle)
+        { display_subtitle (h1_center subtitle) call_back
         ; let stem = adjust_stem gender entry in 
           try look_up ft stem (Nouns.Gender gender) part
           with [ Stream.Error s -> failwith s ] 

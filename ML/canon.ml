@@ -81,7 +81,6 @@ value canon = fun
             where mess = "Canon: Illegal char " ^ string_of_int n
          else "#" ^ Char.escaped (Char.chr (n-2)) (* homo index 1 to 9 *)
                                  (* n-2 above since (ASCII) Char.chr 48 = '0' *)
-
   ]
 ;
 (* Hiatus-conscious catenation [b=True] iff [s] starts with vowel *)
@@ -122,7 +121,7 @@ value rdecode w = decode (Word.mirror w)
       [code_raw "a i" =  [11]] and not [[1; 50; 3]]. 
    Thus one should use underscore for hiatus in digitalised corpus: 
       [code_raw "a_i" =  [1; 3]]. The chunking of text by interpreting spaces 
-   is done in a preliminary pass by Sanskrit.padapatha. *)
+   is done in a preliminary pass by Chunker.chunker. *)
 
 (* Support for other translitteration schemes *)
 
@@ -637,7 +636,7 @@ value canon_uniromcode = fun
   ]
 ;
 (* Gives the Unicode representation of the romanisation of word *)
-(* [unicode : word -> string] *)
+(* [uniromcode : word -> string] *)
 value uniromcode word = 
   let catenate c (s,b) = 
       let b'= c>0 && c<14  (* Phonetics.vowel c *) in
@@ -769,7 +768,8 @@ value unidevcode word =
             if b (* add glyph *) then (s ^ halant ^ code,True)
             else (s ^ code,True) 
          else if b then 
-              if c=0 (* - *) || c>50 (* homo *) then (s ^ halant ^ code,False)
+              if c=0 (* - *) || c>50 (* homo *) || c=15  (* candrabindu *)
+                 then (s ^ halant ^ code,False)
               else (* add matra *) let m = matra_unicode c in (s ^ m,False)
          else (s ^ code,False) 
      with (* hiatus represented by space in devanagarii output *)

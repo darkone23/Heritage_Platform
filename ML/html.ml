@@ -4,7 +4,7 @@
 (*                                                                        *)
 (*                              Gérard Huet                               *)
 (*                                                                        *)
-(* ©2021 Institut National de Recherche en Informatique et en Automatique *)
+(* ©2022 Institut National de Recherche en Informatique et en Automatique *)
 (**************************************************************************)
 
 (*i module Html = struct i*)
@@ -187,7 +187,7 @@ and font_style = [ Normal | Italic | Slanted ]
 ;
 type color = 
   [ Black | White | Red | Blue | Green | Yellow | Orange | Deep_sky | Purple 
-  | Grey | Navy | Cyan | Brown | Carmin | Chamois | Broon | Maroon | Aquamarine
+  | Grey | Navy | Cyan | Brown | Carmin | Chamois | Broon | Maroon | Kaki
   | Gold | Magenta | Mauve | Pink | Gris | Lime | Light_blue | Lavender 
   | Lawngreen | Deep_pink | Pale_rose | Beige | Lilac | Violet ]
 ;
@@ -220,8 +220,8 @@ value rgb = fun (* a few selected HTML colors in rgb data *)
   | Red         -> "#FF0000" (* Firebrick = "#B02020" *)
   | Blue        -> "#0000FF" (* Canard = "#0000C0" ou "#0080FF" *)
   | Green       -> "#008000" (* Teal = "#008080" Olive = "#808000" *)
-  | Aquamarine  -> "#6FFFC3" (* actually Light Aquamarine *)
-  | Lawngreen   -> "#66FF99" (* was "#7CFC00" *)
+  | Kaki        -> "#CCCC00" 
+  | Lawngreen   -> "#80FF00" (* "#66FF99" (* was "#7CFC00" *)*)
   | Yellow      -> "#FFFF00" 
   | Orange      -> "#FFA000"  
   | Cyan        -> "#00FFFF" (* Aqua = Cyan, Turquoise = "#40E0D0" *)
@@ -261,15 +261,13 @@ and   x_sign     = "&#10008;"
 (* Fonts used for the Web site. *)
 (* "Times IndUni" is deprecated, now called "IndUni-T" (John Smith's fonts) *)
 value roman_fonts = [ "IndUni-T"; "Arial Unicode MS" ] (* "Times_CSX" *)
+   (* Used also for Sanskrit romanisation with diacritics *)
 and greek_fonts = [ "Arial Unicode MS"; "Symbol" ] (* "Latin Extended-B" Greek *)
-and diacr_fonts = [ "IndUni-T"; "Arial Unicode MS" ]
-   (* Sanskrit transliteration in romanised script with diacritics *)
-and deva_fonts = [ "Arial Unicode MS" ] (* Devanagari fonts *)
+and deva_fonts = [ "IndUni-T"; "Arial Unicode MS" ] (* Devanagari fonts *)
 (* NB: "Devanagari MT" deprecated because wrong rendering of tacchrutvaa *)
 ; 
 value roman_font = Font_family roman_fonts
 and   greek_font = Font_family greek_fonts
-and   trans_font = Font_family diacr_fonts 
 and   deva_font  = Font_family deva_fonts
 ;
 value points  n = string_of_int n ^ "pt"
@@ -320,16 +318,16 @@ value enpied = "position: fixed; bottom: 0pt; width: 100%"
 type style_class = 
     [ Blue_ | Green_ | Navy_ | Red_ | Magenta_ | Hidden_
     | Header_deva | Header_tran | Bandeau | Body | Spacing20 | Pad60 | Border2
-    | Latin12 | Trans12 | Deva | Devac | Deva16 | Deva16c | Deva20c 
+    | Latin12 | Deva | Devac | Deva16 | Deva16c | Deva20c | Deva16b | Roma16
     | Roma16o | Roma12o | Inflection
-    | Alphabet | G2 | Title | Latin16 | Trans16 | Devared_ | Math | Enpied 
+    | Alphabet | G2 | Title | Latin16 | Devared_ | Math | Enpied 
     | B1 | B2 | B3 | C1 | C2 | C3 | Cell5 | Cell10 | Center_ | Tcenter | Centered
     | Gold_cent | Mauve_cent | Yellow_cent | Cyan_cent | Deep_sky_cent 
     | Yellow_back | Blue_back | Gris_back | Light_blue_back | Gold_back 
     | Pink_back | Chamois_back | Cyan_back | Brown_back | Lime_back | Grey_back 
     | Deep_sky_back | Carmin_back | Orange_back | Red_back | Mauve_back 
     | Lavender_back | Lavender_cent | Green_back | Lawngreen_back | Magenta_back
-    | Aquamarine_back | Gris_cent
+    | Kaki_back | Kaki_cent | Gris_cent
     ]
 ;
 value background = fun
@@ -352,7 +350,7 @@ value background = fun
     | Lavender    -> Lavender_back
     | Green       -> Green_back
     | Lawngreen   -> Lawngreen_back
-    | Aquamarine  -> Aquamarine_back
+    | Kaki        -> Kaki_back
     | Grey        -> Grey_back
     | _ -> failwith "Unknown background style"
     ]
@@ -363,6 +361,7 @@ and centered = fun
     | Gold     -> Gold_cent
     | Deep_sky -> Deep_sky_cent
     | Cyan     -> Cyan_cent
+    | Kaki     -> Kaki_cent
     | Lavender -> Lavender_cent
     | _ -> failwith "Unknown centered style"
     ]
@@ -375,13 +374,13 @@ value styles = fun
     | Yellow_cent     -> [ Bgcolor Yellow; Tablecenter; Border 5; Padding 10 ]
     | Lavender_cent   -> [ Bgcolor Lavender; Tablecenter; Border 5; Padding 10 ]
     | Inflection      -> [ Bgcolor Light_blue; Tablecenter; Border 2; Padding 5 ]
-
     | Deep_sky_cent   -> [ Bgcolor Deep_sky; Tablecenter; Border 5; Padding 10 ]
     | Gold_cent       -> [ Bgcolor Gold; Tablecenter; Border 0; Padding 10 ] 
     | Cyan_cent       -> [ Bgcolor Cyan; Tablecenter; Border 5; Padding 10 ] 
+    | Kaki_cent       -> [ Bgcolor Kaki; Tablecenter; Border 5; Padding 10 ] 
     | Mauve_back      -> [ Bgcolor Mauve ]
     | Magenta_back    -> [ Bgcolor Magenta ]
-    | Aquamarine_back -> [ Bgcolor Aquamarine ]
+    | Kaki_back       -> [ Bgcolor Kaki ]
     | Pink_back       -> [ Bgcolor Pale_rose; No_margin ] (* Pink *)
     | Yellow_back     -> [ Bgcolor Yellow ] 
     | Gris_back       -> [ Bgcolor Gris ]
@@ -400,23 +399,24 @@ value styles = fun
     | Green_back      -> [ Bgcolor Green ]
     | Light_blue_back -> [ Bgcolor Light_blue ]
     | Lavender_back   -> [ Bgcolor Lavender ]
-    | Blue_        -> [ trans_font; Color Blue ] 
-    | Green_       -> [ trans_font; Color Green ]
-    | Navy_        -> [ trans_font; Color Navy ]
-    | Red_         -> [ trans_font; Color Red ]
-    | Roma16o      -> [ trans_font; Color Red; Font_size 16; Font_style Slanted ]
+    | Blue_        -> [ roman_font; Color Blue ] 
+    | Green_       -> [ roman_font; Color Green ]
+    | Navy_        -> [ roman_font; Color Navy ]
+    | Red_         -> [ roman_font; Color Red ]
+    | Roma16o      -> [ roman_font; Color Red; Font_size 16; Font_style Slanted ]
     | Devared_     -> [ deva_font; Color Red ]
-    | Magenta_     -> [ trans_font; Color Magenta ]
+    | Magenta_     -> [ roman_font; Color Magenta ]
     | Header_deva  -> [ deva_font; Color Red; Font_size 24; Textalign Left ]
-    | Header_tran  -> [ trans_font; Color Red; Font_size 24; Textalign Left ]
+    | Header_tran  -> [ roman_font; Color Red; Font_size 24; Textalign Left ]
     | Deva         -> [ deva_font; Color Maroon; Font_size 12 ] 
     | Devac        -> [ deva_font; Color Blue; Font_size 12; Textalign Center ]
     | Deva16       -> [ deva_font; Color Blue; Font_size 16 ] 
+    | Deva16b      -> [ deva_font; Color Black; Font_size 16 ]
+    | Roma16       -> [ roman_font; Color Blue; Font_size 16 ] 
     | Deva16c      -> [ deva_font; Color Blue; Font_size 16; Textalign Center ]
     | Deva20c      -> [ deva_font; Color Blue; Font_size 20; Textalign Center ]
-    | Alphabet     -> [ trans_font; Font_size 24; Textalign Center ]
+    | Alphabet     -> [ roman_font; Font_size 24; Textalign Center ]
     | Title        -> [ roman_font; Color Blue; Font_size 24; Textalign Center ]
-    | Trans12      -> [ trans_font; Font_size 12 ]
     | B1           -> [ roman_font; Color Blue; Font_size 20 ]
     | B2           -> [ roman_font; Color Blue; Font_size 16 ]
     | B3           -> [ roman_font; Color Blue; Font_size 12 ]
@@ -427,10 +427,9 @@ value styles = fun
     | Center_      -> [ Textalign Center ]
     | Pad60        -> [ Textalign Center; Height 60; Full_width ]
     | Tcenter      -> [ Tablecenter ]
-    | Roma12o      -> [ trans_font; Color Black; Font_size 12; Font_style Slanted ]
+    | Roma12o      -> [ roman_font; Color Black; Font_size 12; Font_style Slanted ]
     | Latin12      -> [ roman_font; Color Black; Font_size 12 ]
     | Latin16      -> [ roman_font; Color Black; Font_size 16 ]
-    | Trans16      -> [ trans_font; Color Black; Font_size 16 ]
     | Math         -> [ greek_font; Color Black; Font_size 12 ]
     | Enpied       -> [ Position enpied ]
     | Bandeau      -> [ roman_font; Bgcolor Cyan; Border_sep; Border_sp 10 
@@ -477,13 +476,15 @@ value class_of = fun
     | Red_back        -> "red_back"
     | Green_back      -> "green_back"
     | Lawngreen_back  -> "lawngreen_back"
-    | Aquamarine_back -> "aquamarine_back"
+    | Kaki_back       -> "kaki_back"
+    | Kaki_cent       -> "kaki_cent"
     | Grey_back       -> "grey_back"
     | Blue_           -> "blue" 
     | Green_          -> "green"
     | Navy_           -> "navy"
     | Red_            -> "red"
-    | Roma16o         -> "red16"
+    | Roma16          -> "roma16"
+    | Roma16o         -> "roma16o"
     | Roma12o         -> "roma12o"
     | Magenta_        -> "magenta"
     | Header_deva     -> "header_deva"
@@ -495,9 +496,9 @@ value class_of = fun
     | Deva16          -> "deva16"
     | Deva16c         -> "deva16c"
     | Deva20c         -> "deva20c"
+    | Deva16b         -> "deva16b"
     | Alphabet        -> "alphabet"
     | Title           -> "title"
-    | Trans12         -> "trans12"
     | B1              -> "b1"
     | B2              -> "b2"
     | B3              -> "b3"
@@ -509,7 +510,6 @@ value class_of = fun
     | Tcenter         -> "center"
     | Spacing20       -> "spacing20"
     | Latin16         -> "latin16"
-    | Trans16         -> "trans16"
     | Math            -> "math"
     | Enpied          -> "enpied"
     | Bandeau         -> "bandeau"
@@ -581,11 +581,10 @@ and html_magenta       = span Magenta_
 and html_blue          = span Blue_
 and html_green         = span Green_
 and html_math          = span Math
-and html_trans12       = span Trans12
-and html_trans16       = span Trans16
 and html_latin12       = span Latin12
 and html_latin16       = span Latin16
 and roma16_red_sl      = span Roma16o
+and roma16_blue        = span Roma16
 and roma12_sl          = span Roma12o
 and span2_center       = span B2
 and span3_center       = span B3
@@ -593,6 +592,7 @@ and deva12_blue_center = span_skt Devac
 and deva16_blue        = span_skt Deva16
 and deva16_blue_center = span_skt Deva16c
 and deva20_blue_center = span_skt Deva20c
+and deva16_black       = span_skt Deva16b
 ;
 value title s = xml_begin "title" ^ s ^ xml_end "title"
 and h1_title s = h1_begin Title ^ s ^ h1_end 
@@ -631,7 +631,7 @@ value anchor_pseudo url link =
 (***************************)
 
 value start_year = " 1994-"
-and current_year = "2021"
+and current_year = "2024"
 and author_name = "Gérard Huet"
 ;
 value copyright = "© " ^ author_name ^ start_year ^ current_year

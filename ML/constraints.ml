@@ -139,7 +139,7 @@ value root_regime = fun
   | "ru.s#1" | "ruh#1" | "lag" | "lamb" | "lal" | "las" | "vak.s" | "vas#1" 
   | "vah#1" (* nadii vahati *) | "vaa#2" | "vaaz" | "vij" | "vip" | "viz#1" 
   | "v.rt#1" | "v.rdh#1" | "vyath" | "zak" | "zad" | "zam#1" | "zii#1" | "ziil"
-  | "zuc#1" | "zudh" | "zubh#1" | "zu.s" | "zuu" | "zram" | "zrambh" | "zvas#1" 
+  | "zuc#1" | "zudh" | "zubh#1" | "zu.s#1" | "zuu" | "zram" | "zrambh" | "zvas#1"
   | "zvit#1" | "sap#1" | "saa#1" | "sidh#1" | "sur" | "skhal" | "stan" | "stu" 
   | "stubh" | "sthaa#1" | "snih#1" | "snu" | "spand" | "spardh" | "sphaa"
   | "sphu.t" | "sphur" | "smi" | "syand" | "sra.ms" | "svap" | "svar#1" 
@@ -223,9 +223,9 @@ value regime entry (cj,t) =
                    | _ -> Indicative (* now, only Imperative for Present *) 
                    ] in
         (aspect,valency,mood) 
-     | Perfut _ -> (if regime=Factitive then Statif else Imperfectif, 
+(* OBS     | Perfut _ -> (if regime=Factitive then Statif else Imperfectif, 
                     match regime with [ Transitive -> [ Object ] | _ -> [] ],
-                    Indicative)
+                    Indicative) *)
      ] 
 ;
 value get_fin_roles entry f n p = 
@@ -261,7 +261,7 @@ value get_roles entry = fun
                 else if g=Deictic Numeral || entry="eka" then Number g c n
                 else Actor (gram_role n entry c) g n (* beware n duplication *)
   | Verb_form f n p -> get_fin_roles entry f n p 
-  | Abs_root _ -> get_abs_roles entry 
+(*  | Abs_root _ -> get_abs_roles entry  *)
   | Ind_form Conj -> match entry with
                      [ "ca" -> Tool Coordination
                      | _ -> Ignored (* TODO vaa etc *)

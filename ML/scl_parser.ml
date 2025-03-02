@@ -2,9 +2,9 @@
 (*                                                                        *)
 (*                     The Sanskrit Heritage Platform                     *)
 (*                                                                        *)
-(*                      Gérard Huet & Amba Kulkarni                       *)
+(*             Gérard Huet & Amba Kulkarni & Sriram Krishnan              *)
 (*                                                                        *)
-(* ©2020 Institut National de Recherche en Informatique et en Automatique *)
+(* ©2022 Institut National de Recherche en Informatique et en Automatique *)
 (**************************************************************************)
 
 (* Module [Scl_parser] used as interface with UoH dependency parser *)
@@ -37,17 +37,37 @@ value print_scl_solution s =
 ;
 (* Invocation of UoH's CSL parser for dependency graph display *)
 value print_scl1 scl_font (solution : list (Phases.phase * Word.word)) =
-  let svg_interface_url = scl_cgi ^ "SHMT/" in do
-  { ps ("<script type=\"text/javascript\" src=\"" ^ scl_url ^ "js_files/dragtable.js\"></script>")
-  ; ps ("<form name=\"word-order\" method=\"POST\" action = \""
+  let svg_interface_url = scl_cgi ^ "MT/" in do
+  { ps ("<script type=\"text/javascript\" src=\"" 
+       ^ scl_url ^ "js_files/dragtable.js\"></script>")
+  ; ps ("<form name=\"word-order\" method=\"POST\" action = \"" 
        ^ svg_interface_url ^ "prog/Word_order/call_heritage2anu.cgi\">\n")
   ; ps ("<table class=\"draggable\">")
   ; ps tr_begin
   ; print_scl_solution solution
-  ; ps ("<td><input type=\"hidden\" name=\"DISPLAY\" value=\"" ^ scl_font ^"\"/></td>")
+  ; ps ("<td><input type=\"hidden\" name=\"DISPLAY\" value=\"" 
+       ^ scl_font ^"\"/></td>")
   ; ps tr_end
   ; ps table_end 
-  ; ps (submit_input "Submit")
+  (* Since the Submit button is renamed to UoH Analysis, this label is redundant *)
+  (* ; (Encode.skt_to_deva "sa.msaadhanii" ^ " : ") |> pl *)
+  ; ps (submit_input "UoH Analysis")
+  } 
+;
+(* Invocation of UoH's SCL parser for dependency graph display.
+   Shortened version of [print_scl1] to access [Lex.print_scl_segment_forms] 
+   directly. *)
+value print_scl_segmentation scl_font sol_num 
+                             (solution : list (Phases.phase * Word.word)) =
+  let sol_num_string = ((string_of_int sol_num) ^ " - UoH") in
+  let svg_interface_url = scl_cgi ^ "MT/" in do
+  { ps ("<form name=\"word-order\" method=\"POST\" action = \"" 
+       ^ svg_interface_url ^ "prog/Word_order/call_heritage2anu.cgi\">")
+  ; ps ("<input type=\"hidden\" name=\"DISPLAY\" value=\"" 
+  ^ scl_font ^"\"/>")
+  ; let _ = List.fold_left Lex.print_scl_segment_forms 1 solution in () 
+  ; ps (submit_input sol_num_string)
+  ; ps (xml_end "form")
   } 
 ;
 (* We restrict to the first solution - TEMPORARY *)
@@ -55,5 +75,34 @@ value print_scl scl_font sols = match sols with
   [ [] -> failwith "No sol"
   | [ s :: _ ] -> print_scl1 scl_font s
   ]
+;
+(* This is an additional method to directly call scl's MT interface *)
+value invoke_scl_parser text sol_num font  =
+  let sol_num_string = (string_of_int sol_num) in
+  let svg_interface_url = scl_cgi ^ "MT/" in do
+  { ps ("<form name=\"parse " ^ sol_num_string 
+       ^ "\" form style='display: inline;' method=\"GET\" action = \""
+       ^ svg_interface_url ^ "anusaaraka.cgi\">\n")
+  ; ps ("<input type=\"hidden\" name=\"encoding\" value=\"WX\"/>")
+  ; ps ("<input type=\"hidden\" name=\"text\" value=\"" 
+       ^ (String.trim text) ^ "\"/>")
+  ; ps ("<input type=\"hidden\" name=\"splitter\" value=\"None\"/>")
+  ; ps ("<input type=\"hidden\" name=\"out_encoding\" value=\"" ^ font ^ "\"/>")
+  ; ps ("<input type=\"hidden\" name=\"parse\" value=\"Full\"/>")
+  ; ps ("<input type=\"hidden\" name=\"text_type\" value=\"Sloka\"/>")
+  ; ps ("<input type=\"hidden\" name=\"mode\" value=\"web\"/>")
+  ; ps ("<input type=\"hidden\" name=\"tlang\" value=\"Hindi\"/>")
+  ; ps (submit_input (sol_num_string))
+  ; ps (xml_end "form")
+  } 
+;
+value post_best_segments_scl all_segments = 
+  let _ = List.fold_left Lex.best_segments_for_scl 1 all_segments in ()
+;
+
+value generate_scl_cgi text font = 
+  scl_cgi ^ "MT/anusaaraka.cgi?encoding=WX&text=" ^ text 
+          ^ "&splitter=None&out_encoding=" ^ font 
+          ^ "&parse=Full&text_type=Sloka&mode=web&tlang=Hindi"
 ;
 (* end; *)

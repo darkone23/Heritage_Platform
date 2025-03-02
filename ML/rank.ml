@@ -2,9 +2,9 @@
 (*                                                                        *)
 (*                     The Sanskrit Heritage Platform                     *)
 (*                                                                        *)
-(*                        Pawan Goyal & Gérard Huet                       *)
+(*              Pawan Goyal & Gérard Huet & Sriram Krishnan               *)
 (*                                                                        *)
-(* ©2020 Institut National de Recherche en Informatique et en Automatique *)
+(* ©2021 Institut National de Recherche en Informatique et en Automatique *)
 (**************************************************************************)
 
 (* This library is used by Reader. It constructs a lexer Lex, 

@@ -64,6 +64,15 @@ value switch_code = fun (* normalizes anusvaara in its input *)
   | _ -> failwith "Unknown transliteration scheme"
   ] 
 ;
+(* Switching code function according to transliteration convention *)
+value switch_code_no_norm = fun (* does not normalize anusvaara in its input *)
+  [ "VH" -> code_raw    (* [Canon.decode]    *)
+  | "WX" -> code_raw_WX (* [Canon.decode_WX] *)
+  | "KH" -> code_raw_KH (* [Canon.decode_KH] *)
+  | "SL" -> code_raw_SL (* [Canon.decode_SL] *)
+  | _ -> failwith "Unknown transliteration scheme"
+  ]
+;
 value rev_code_string str = Word.mirror (code_string str)
 ;
 (* [anchor : string -> string] -- used in [Morpho_html.url] and Sanskrit *)
@@ -124,6 +133,8 @@ and skt_raw_to_deva   str = try Canon.unidevcode (code_raw str) with
                                 [ Failure _ -> failwith ("raw " ^ str) ]
 and skt_strip_to_deva str = try Canon.unidevcode (code_strip_raw str) with
                                 [ Failure _ -> failwith ("raw stripped " ^ str) ]
+;
+value skt_to_roma str = Canon.uniromcode (code_string str) 
 ;
 (* Following not needed since [Transduction.skt_to_html] is more direct 
 [value skt_to_roma         str = Canon.uniromcode (code_string str) 

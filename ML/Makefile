@@ -2,12 +2,12 @@
 #                                                                          #
 #                     The Sanskrit Heritage Platform                       #
 #                                                                          #
-#                        Gérard Huet & Pawan Goyal                         #
+#              Gérard Huet & Pawan Goyal & Sriram Krishnan                 #
 #                                                                          #
 ############################################################################
-# Makefile of Sanskrit Heritage Software  28-05-2020  Copyright INRIA 2020 #
+# Makefile of Sanskrit Heritage Software  21-10-2024  Copyright INRIA 2024 #
 ############################################################################
-# Prerequisites: Ocaml 4.07 and Camlp4 preprocessor
+# Prerequisites: Ocaml >= 4.07 and Camlp4 preprocessor with consistent version
 
 # For change of make in all recursive Makefiles
 MAKE=make
@@ -15,11 +15,14 @@ MAKE=make
 # ZEN computational linguistics toolkit Ocaml library 
 ZEN=../ZEN
 
+# Heritage Resources DATA
+DATA=../../Heritage_Resources/DATA
+
 # Literate programming tool ocamlweb (available from Ocaml hump) J.C. Filliatre
 NOWEB=./ocamlweb 
 
 ZENSOURCES=gen.ml list2.ml word.ml share.mli share.ml unshare.ml trie.ml \
-mini.ml deco.ml lexmap.ml minimap.mli minimap.ml # zen_lexer.ml
+mini.ml deco.ml lexmap.ml minimap.mli minimap.ml zen_lexer.ml min_lexer.ml
 
 VPATH=$(ZEN) 
 
@@ -45,9 +48,11 @@ GRAM = index.ml phonetics.ml int_sandhi.ml skt_morph.mli morphology.mli \
        dispatcher.mli dispatcher.ml segmenter.ml load_morphs.ml lexer.mli \
        lexer.ml rank.ml scl_parser.ml reader.ml parser.ml constraints.mli \
        constraints.ml multilingual.ml paraphrase.mli paraphrase.ml \
-       bank_lexer.ml checkpoints.ml graph_segmenter.ml \
-       interface.mli interface.ml user_aid.ml reset_caches.ml \
-       restore_caches.ml params.mli params.ml
+       bank_lexer.ml checkpoints.ml morpho_analysis.ml graph_segmenter.ml \
+	   frequency.ml segmenter2.ml interface.mli interface.ml \
+	   interface2.mli interface2.ml user_aid.ml reset_caches.ml \
+	   restore_caches.ml params.mli params.ml make_word_freq.ml \
+	   make_trans_freq.ml make_morph_freq.ml
 
 # WEB package - HTML, HTTP, CGI utilities for Web interface
 WEB = html.ml web.ml css.ml cgi.ml morpho_html.ml chapters.ml morpho_scl.ml \
@@ -70,14 +75,14 @@ TREE = parse_tree.ml parse_apte.ml stemmer.ml tag_tree.ml tag_apte.ml
 DEBUG=debug.ml 
 
 ENGINE=$(CORE) $(GRAM) $(WEB) $(CORPUS) 
-INACTIVE=$(TREE) nyaaya.ml mk_nyaaya_page.ml regression.ml regression_lexer.ml \
+OBSOLETE=$(TREE) nyaaya.ml mk_nyaaya_page.ml regression.ml regression_lexer.ml \
 statseg.ml
 
-SOURCES=$(ENGINE) $(DEBUG) $(INACTIVE) 
+SOURCES=$(ENGINE) $(DEBUG) $(OBSOLETE) 
 
 CORENATIVES=list2.cmx gen.cmx paths.cmx version.cmx word.cmx canon.cmx \
 min_lexer.cmx phonetics.cmx transduction.cmx encode.cmx skt_lexer.cmx \
-chunker.cmx sanskrit.cmx order.cmx data.cmx
+chunker.cmx sanskrit.cmx order.cmx data.cmx 
 
 ANNOTFLAGS = -annot -bin-annot
 
@@ -91,7 +96,10 @@ LINK=ocamlfind ocamlopt -package camlp4.extend -I $(ZEN) -I +camlp4 dynlink.cmxa
 
 # standard installation of Sanskrit Heritage platform - assumes ZEN library
 
-all: make_transducers make_xml_data engine sandhi_test
+# 23/01/2025 : removed sandhi_test in all: below because unknown problem
+
+all: make_transducers make_xml_data engine make_word_freq \
+	make_trans_freq make_morph_freq
 
 engine: test_version cgis reset_caches restore_caches static_pages mk_corpus 
 
@@ -102,6 +110,17 @@ make_preverb_automaton.cmx
 	$(LINK) $(CORENATIVES) share.cmx trie.cmx mini.cmx deco.cmx \
 automata.cmx make_automaton.cmx make_preverb_automaton.cmx \
 make_transducers.cmx -o make_transducers
+
+make_word_freq: make_word_freq.cmx
+	$(LINK) $(CORENATIVES) deco.cmx zen_lexer.cmx lexmap.cmx \
+make_word_freq.cmx -o make_word_freq
+	
+make_trans_freq: make_trans_freq.cmx
+	$(LINK) $(CORENATIVES) make_trans_freq.cmx -o make_trans_freq
+
+make_morph_freq: make_morph_freq.cmx
+	$(LINK) $(CORENATIVES) deco.cmx zen_lexer.cmx lexmap.cmx \
+make_morph_freq.cmx -o make_morph_freq
 
 make_xml_data: $(CORENATIVES) date.cmx html.cmx deco.cmx \
 make_xml_data.cmx 
@@ -169,7 +188,7 @@ bank_lexer.cmo tag_tree.cmo tag_apte.cmo
 	(cat debug_apte.ml ; cat -) | ocaml -I +camlp4 -I . -I $(ZEN)
 
 cgis: skt_morph.cmi auto.cmi indexer indexerd declension conjugation \
-lemmatizer reader parser sandhier reader interface user_aid \
+lemmatizer reader parser sandhier reader interface interface2 user_aid \
 corpus_manager save_corpus mkdir_corpus
 
 indexer: indexer.cmx
@@ -235,10 +254,24 @@ transduction.cmx encode.cmx skt_lexer.cmx chunker.cmx sanskrit.cmx deco.cmx \
 lexmap.cmx inflected.cmx html.cmx SCLpaths.cmx data.cmx web.cmx naming.cmx \
 morpho_string.cmx morpho.cmx load_transducers.cmx pada.cmx phases.cmx \
 dispatcher.cmx order.cmx chapters.cmx morpho_html.cmx bank_lexer.cmx cgi.cmx \
-load_morphs.cmx int_sandhi.cmx nouns.cmx share.cmx minimap.cmx mini.cmx \
-graph_segmenter.cmx checkpoints.cmx automaton.cmx params.cmx \
-save_corpus_params.cmx dir.cmx corpus.cmx web_corpus.cmx interface.cmx \
--o interface
+load_morphs.cmx sandhi.cmx int_sandhi.cmx nouns.cmx share.cmx minimap.cmx \
+mini.cmx segmenter.cmx graph_segmenter.cmx \
+morpho_scl.cmx lexer.cmx scl_parser.cmx checkpoints.cmx \
+automaton.cmx params.cmx save_corpus_params.cmx dir.cmx corpus.cmx \
+web_corpus.cmx interface.cmx -o interface
+
+interface2: interface2.cmx minimap.cmx
+	$(LINK) str.cmxa unix.cmxa list2.cmx gen.cmx paths.cmx version.cmx \
+date.cmx control.cmx word.cmx canon.cmx min_lexer.cmx phonetics.cmx \
+transduction.cmx encode.cmx skt_lexer.cmx chunker.cmx sanskrit.cmx deco.cmx \
+lexmap.cmx inflected.cmx html.cmx SCLpaths.cmx data.cmx web.cmx naming.cmx \
+morpho_string.cmx morpho.cmx load_transducers.cmx pada.cmx phases.cmx \
+dispatcher.cmx order.cmx chapters.cmx morpho_html.cmx bank_lexer.cmx cgi.cmx \
+load_morphs.cmx sandhi.cmx int_sandhi.cmx nouns.cmx share.cmx minimap.cmx \
+mini.cmx segmenter.cmx morpho_analysis.cmx graph_segmenter.cmx frequency.cmx \
+segmenter2.cmx morpho_scl.cmx lexer.cmx scl_parser.cmx checkpoints.cmx \
+automaton.cmx params.cmx save_corpus_params.cmx dir.cmx corpus.cmx \
+web_corpus.cmx interface2.cmx -o interface2
 
 user_aid: user_aid.cmx
 	$(LINK) str.cmxa list2.cmx gen.cmx paths.cmx version.cmx date.cmx \
@@ -268,12 +301,13 @@ corpus_manager: corpus_manager_cgi.cmx
 		web.cmx	naming.cmx morpho_string.cmx morpho.cmx		\
 		load_transducers.cmx pada.cmx phases.cmx dispatcher.cmx	\
 		order.cmx chapters.cmx morpho_html.cmx bank_lexer.cmx	\
-		cgi.cmx load_morphs.cmx int_sandhi.cmx nouns.cmx	\
-		share.cmx minimap.cmx mini.cmx $(LEGACY) \
-		graph_segmenter.cmx checkpoints.cmx automaton.cmx	\
+		cgi.cmx load_morphs.cmx sandhi.cmx int_sandhi.cmx	\
+		nouns.cmx share.cmx minimap.cmx mini.cmx $(LEGACY)	\
+		morpho_analysis.cmx graph_segmenter.cmx frequency.cmx	\
+		segmenter2.cmx checkpoints.cmx automaton.cmx	\
 		params.cmx save_corpus_params.cmx dir.cmx corpus.cmx	\
-		web_corpus.cmx multilingual.cmx				\
-		mkdir_corpus_params.cmx corpus_manager.cmx $< -o $@
+		web_corpus.cmx multilingual.cmx mkdir_corpus_params.cmx	\
+		corpus_manager.cmx $< -o $@
 
 save_corpus: save_corpus_cgi.cmx
 	$(LINK) str.cmxa unix.cmxa list2.cmx gen.cmx paths.cmx		\
@@ -284,9 +318,10 @@ save_corpus: save_corpus_cgi.cmx
 		web.cmx naming.cmx morpho_string.cmx morpho.cmx		\
 		load_transducers.cmx pada.cmx phases.cmx dispatcher.cmx	\
 		order.cmx chapters.cmx morpho_html.cmx bank_lexer.cmx	\
-		cgi.cmx load_morphs.cmx int_sandhi.cmx nouns.cmx	\
-		share.cmx minimap.cmx mini.cmx $(LEGACY) \
-		graph_segmenter.cmx checkpoints.cmx automaton.cmx	\
+		cgi.cmx load_morphs.cmx sandhi.cmx int_sandhi.cmx	\
+		nouns.cmx share.cmx minimap.cmx mini.cmx $(LEGACY)	\
+		morpho_analysis.cmx graph_segmenter.cmx frequency.cmx	\
+		segmenter2.cmx checkpoints.cmx automaton.cmx	\
 		params.cmx save_corpus_params.cmx dir.cmx corpus.cmx	\
 		web_corpus.cmx multilingual.cmx				\
 		mkdir_corpus_params.cmx corpus_manager.cmx $< -o $@
@@ -300,12 +335,13 @@ mkdir_corpus: mkdir_corpus_cgi.cmx
 		web.cmx naming.cmx morpho_string.cmx morpho.cmx		\
 		load_transducers.cmx pada.cmx phases.cmx dispatcher.cmx	\
 		order.cmx chapters.cmx morpho_html.cmx bank_lexer.cmx	\
-		cgi.cmx load_morphs.cmx int_sandhi.cmx nouns.cmx	\
-		share.cmx minimap.cmx mini.cmx $(LEGACY) \
-		graph_segmenter.cmx checkpoints.cmx automaton.cmx	\
+		cgi.cmx load_morphs.cmx sandhi.cmx int_sandhi.cmx	\
+		nouns.cmx share.cmx minimap.cmx mini.cmx $(LEGACY)	\
+		morpho_analysis.cmx graph_segmenter.cmx frequency.cmx	\
+		segmenter2.cmx checkpoints.cmx automaton.cmx	\
 		params.cmx save_corpus_params.cmx dir.cmx corpus.cmx	\
-		web_corpus.cmx multilingual.cmx				\
-		mkdir_corpus_params.cmx corpus_manager.cmx $< -o $@
+		web_corpus.cmx multilingual.cmx mkdir_corpus_params.cmx	\
+		corpus_manager.cmx $< -o $@
 
 mk_corpus: mk_corpus.cmx
 	$(LINK) str.cmxa unix.cmxa list2.cmx gen.cmx paths.cmx		\
@@ -316,11 +352,12 @@ mk_corpus: mk_corpus.cmx
 		web.cmx naming.cmx morpho_string.cmx morpho.cmx		\
 		load_transducers.cmx pada.cmx phases.cmx dispatcher.cmx	\
 		order.cmx chapters.cmx morpho_html.cmx bank_lexer.cmx	\
-		cgi.cmx load_morphs.cmx int_sandhi.cmx nouns.cmx	\
-		share.cmx minimap.cmx mini.cmx $(LEGACY) \
-		graph_segmenter.cmx checkpoints.cmx automaton.cmx	\
+		cgi.cmx load_morphs.cmx sandhi.cmx int_sandhi.cmx	\
+		nouns.cmx share.cmx minimap.cmx mini.cmx $(LEGACY)	\
+		morpho_analysis.cmx graph_segmenter.cmx frequency.cmx	\
+		segmenter2.cmx checkpoints.cmx automaton.cmx	\
 		params.cmx save_corpus_params.cmx dir.cmx corpus.cmx	\
-		web_corpus.cmx  multilingual.cmx			\
+		web_corpus.cmx multilingual.cmx	\
 		mkdir_corpus_params.cmx $< -o $@
 
 css: css.cmx
@@ -391,7 +428,7 @@ canon.cmo phonetics.cmo min_lexer.cmo transduction.cmo chunker.cmo \
 sanskrit.cmo sandhi.cmo int_sandhi.cmo share.cmo trie.cmo deco.cmo \
 skt_lexer.cmo encode.cmo order.cmo lexmap.cmo inflected.cmo parts.cmo pada.cmo \
 verbs.cmo morpho_html.cmo cgi.cmo html.cmo web.cmo indexer.cmo declension.cmo \
-zen_lexer.cmo data.cmo automaton.cmo
+zen_lexer.cmo data.cmo automaton.cmo pv_sandhi.cmo
 	(cat debug.ml ; cat -) | ocaml -I +camlp4 -I . -I $(ZEN)
 
 morpho_debug: list2.cmo word.cmo deco.cmo morpho_string.cmo paths.cmo \
@@ -420,7 +457,7 @@ clean:
 	rm -f *.cmo *.cmi *.cmx *.ppi *.ppo *.o *.annot *.cmt *.cmti
 	rm -f css indexer indexerd sandhier reader parser lemmatizer \
 declension conjugation mk_index_page mk_grammar_page mk_reader_page regression \
-mk_sandhi_page mk_corpus_page sandhi_test reset_caches interface user_aid \
+mk_sandhi_page mk_corpus_page sandhi_test reset_caches interface interface2 user_aid \
 parse_apte tag_apte corpus_manager save_corpus mkdir_corpus mk_corpus
 #	make dico.cmi auto.cmi conj_infos.cmi # needed to get dependencies right 
 

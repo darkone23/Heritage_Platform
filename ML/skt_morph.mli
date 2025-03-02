@@ -18,15 +18,25 @@ and genders = list gender
 ;
 type number = [ Singular | Dual | Plural ] 
 ;
-type case = [ Nom (* nominatif *)
-            | Acc (* accusatif *)
-            | Ins (* instrumental *) (* comitatif (Henry) *)
-            | Dat (* datif *)
-            | Abl (* ablatif *)
-            | Gen (* génitif *)
-            | Loc (* locatif *)
-            | Voc (* vocatif *)
-            ]
+type case = 
+  [ Nom (* nominatif *)
+  | Acc (* accusatif *)
+  | Ins (* instrumental *) (* comitatif (Henry) *)
+  | Dat (* datif *)
+  | Abl (* ablatif *)
+  | Gen (* génitif *)
+  | Loc (* locatif *)
+  | Voc (* vocatif *)
+  ]
+;
+(* Varieties of na~n-samaasas *)
+type nan_kind =
+  [ Neg  (* logical negation: adj -> adj *)
+  | Not  (* sentential negation: adv -> adv *)
+  | Opp  (* opposite notion: subst -> subst preserving gender *)
+  | Priv (* bahuvrihi: noun -> adj with gender-raising *)
+  | Abse (* absence noun -> noun in n. *) 
+  ]
 ;
 (* The verb system *)
 type gana = int (* present class: 1 to 10, plus 11 for denominatives *)
@@ -43,7 +53,7 @@ and paradigm =
   | Presentm of gana and pr_mode (* aatmanepade *)
   | Presentp of pr_mode (* passive of present system *)
   | Conjug of tense and voice (* other tenses/modes/aspects *)
-  | Perfut of voice (* periphrastic futur (lu.t) - always active *)
+(* OBS  | Perfut of voice (* periphrastic futur (lu.t) - always active *) *)
   ]
 and voice = [ Active | Middle | Passive ] (* diathesis (pada: Para Atma Ubha) *)
 and pr_mode = 
@@ -53,20 +63,23 @@ and pr_mode =
   | Optative (* Potential (lif) *) 
   ]
 and tense = 
-  [ Future (* (l.r.t) *)
-  | Perfect (* Remote past - resultative aspect (li.t) *)
-  | Aorist of aor_class (* Immediate past or future with perfective aspect (luf) *)
-  | Injunctive of aor_class (* (le.t) - injunctions also Prohibitive with maa *) 
-  | Benedictive (* Precative: optative aorist (aazirlif) *) 
-  | Conditional (* Preterit of future (l.rf) *)
-  | Subjunctive (* le.t *) (* Rare subjunctive, intermediate between Optative and Imperative *)
+  [ Perfect (* (li.t) Remote past - resultative aspect *)
+  | Aorist of aor_class (* (luf) Immediate past or future - perfective aspect *)
+  | Injunctive of aor_class (* (le.t) - injunctions no tense or mood
+                               also Prohibitive with maa *) 
+  | Benedictive (* (aazirlif) Precative: optative aorist *) 
+  | Future (* (l.r.t) *)
+  | Future2 (* (lu.t) periphrastic futur *)
+  | Conditional (* (l.rf) Preterit of future *)
+  | Subjunctive (* (le.t) Rare subjunctive, in-between Optative and Imperative *)
   ]
 ;
 (* NB from Indo-European: the present stem has the imperfective aspect,
    the aorist one the perfective aspect, and the perfect one the resultative. *)
-(* Vedic Subjunctive and Pluperfect are not yet taken into account. The only
-   non-present passive forms are some passive aorist forms in 3rd sg. 
-   Future, Perfect and Aorist use Midddle forms for Passive. *)
+(* Vedic Pluperfect is not yet taken into account. The only non-present passive 
+   forms are some passive aorist forms in 3rd sg. Future, Perfect and Aorist 
+   use Middle forms for Passive. *)
+(* Missing: Vedic imperative root aorist Pan(6,4,102) eg "k.rdhi" for "k.r#1" *)
 
 (* Verbal adjectives *)
 type kritya = int (* shades of intention of passive future/potential participle: 
@@ -78,7 +91,7 @@ type verbal = (conjugation * participle)
 and participle = (* participles *)
 (* These are the kridanta stems (primary verbal derivatives) with participial 
    value. They act as adjectives or gendered nouns. But [Ppra] does not qualify 
-   as a noun, but as an adverb, signifying simultaneous action. *)
+   as a noun, but as an adverb, signifying simultaneity with main action. *)
   [ Ppp          (* passive past participle *)
   | Pppa         (* active past participle *) 
   | Ppra of gana (* active present participle *)
@@ -90,6 +103,7 @@ and participle = (* participles *)
   | Pfutm (* middle future participle *)
   | Pfutp of kritya (* passive future/potential participle/gerundive 3 forms *)
   | Action_noun (* generative only for auxiliaries, for cvi compounds *)
+  | Agent_noun  (* id.  *)
 (*| [Agent_noun], etc. -- non generative, must be lexicalized; see nominal *)
   ]
 ;
@@ -98,32 +112,15 @@ and participle = (* participles *)
    Infinitives are similar to dative substantival forms, periphrastic perfect
    forms are associated with an auxiliary verb in the perfect.
    Absolutives split into root absolutives in -tvaa and absolutives in -ya 
-   that must be prefixed with a preverb. Absolutives in -aam (.namul) are in both. *)
+   that must be prefixed with a preverb. Absolutives in -am (.namul) are in both
+*)
 type modal = (conjugation * invar) 
 and invar =
-  [ Infi    (* infinitive (tumun) *)
-  | Absoya  (* absolutive (gerund, invariable participle) (lyap) *) 
-  | Perpft  (* periphrastic perfect (li.t) *)
-  ]
-;
-(* Varieties of na~n-samaasas *)
-type nan_kind =
-  [ Neg  (* logical negation: adj -> adj *)
-  | Not (* sentential negation: adv -> adv *)
-  | Opp (* opposite notion: subst -> subst preserving gender *)
-  | Priv (* bahuvrihi: noun -> adj with gender-raising *)
-  | Abse  (* noun -> noun in n. *) 
-  ]
-;
-type sadhana = (* karaka, action or absolutive - coarser than krit *)
-  [ Agent
-  | Action
-  | Object
-  | Instr
-  | Orig (* unused *)
-  | Loca 
-  | Absolu
-  | Nan of nan_kind
+  [ Infi     (* infinitive (tumun) *)
+  | Absoya   (* absolutive (gerund, invariable participle) (lyap) *) 
+  | Absotvaa (* absolutive of roots (ktvaa) *)
+  | Namul    (* absolutive in -am (.namul) *)
+  | Perpft   (* periphrastic perfect (li.t) *)
   ]
 ;
 (* Primary nominal formations (k.rdantas) *)
@@ -154,22 +151,22 @@ and krit = (* coarser than Paninian krit suffixes *)
   | Agent_nu (* i.s.nu \Pan{3,2,136} 
                 i.s.nuc \Pan{3,2,136-138} -i.s.nu gu.na (habit)
                 khi.s.nuc \Pan{3,2,57} -i.s.n'u gu.na 
-                knu \Pan{3,2,140} ksnu \Pan{3,2,139} -nu -gu.na *)
-  | Action_ana (* lyu.t \Pan{3,3,115-117}            -ana n.    *)
-  | Action_na (* naf \Pan{3,3,90} nan \Pan{3,3,91} -na m. -naa f. *) 
-  | Action_a (* gha~n \Pan{3,3,18-}                -a m. v.rddhi *)
-  | Action_ya (* kyap \Pan{3,1,107} -ya n. -yaa f.              *)
-  | Action_ti (* ktin \Pan{3,3,94-96}                      -ti f.  *)
-  | Action_i (* ki \Pan{3,3,92-93}                     -i f.    *)
-  | Action_root (* unknown krit of non-agent noun  *) 
-  | Object_root (* we should probably lump action and object in [Non_agent] *)
-  | Object_a (* ka                                     -a n.    *) 
-  | Instrument (* ka \Pan{3,1,136}                  0/amui n.   *)
-  | Instra (* .s.tran -tra n.                -trii f. traa f.   *)
-  | Orig_root (* sruc srut sruva *)
-  | Agent_u   (* san+u                             -u on des stem  *)
-  | Action_aa (* san+a+.taap  \Pan{3,3,102}        -aa on des stem *)
-  | Abstract (* abstract nouns n.           -as u.naadi suffix *)
+                knu \Pan{3,2,140} ksnu \Pan{3,2,139} -nu -gu.na     *)
+  | Action_ana  (* lyu.t \Pan{3,3,115-117}            -ana n.       *)
+  | Action_na   (* naf \Pan{3,3,90} nan \Pan{3,3,91} -na m. -naa f. *) 
+  | Action_a    (* gha~n \Pan{3,3,18-}                -a m. v.rddhi *)
+  | Action_ya   (* kyap \Pan{3,1,107} -ya n. -yaa f.                *)
+  | Action_ti   (* ktin \Pan{3,3,94}                      -ti f.    *)
+  | Action_i    (* ki \Pan{3,3,92-93}                     -i f.     *)
+  | Action_root (* unspecified krit                                 *)
+  | Object_root (* cit#2 lump action and object in [Non_agent] ?    *)
+  | Object_a    (* ka                                     -a n.     *) 
+  | Instrument  (* ka \Pan{3,1,136}                  0/amui n.      *)
+  | Location    (* gha  *)
+  | Instra      (* .s.tran -tra n.               -trii f. traa f.   *)
+  | Agent_u     (* san+u                         -u on des stem     *)
+  | Action_aa   (* san+a+.taap  \Pan{3,3,102}    -aa on des stem    *)
+  | Abstract    (* abstract nouns n.             -as u.naadi suffix *)
   ]
 ;
 

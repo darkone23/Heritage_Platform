@@ -5,7 +5,7 @@
 
 <title>The Sanskrit Heritage Site</title>
 <meta name="author" content="Gérard Huet">
-<meta property="dc:datecopyrighted" content="2021">
+<meta property="dc:datecopyrighted" content="2025">
 <meta property="dc:rightsholder" content="Gérard Huet">
 <meta name ="keywords" content="india,dictionary,indology,sanskrit,lexicography,linguistics,indo-european,dictionnaire,sanscrit,panini,indology,linguistics">
 <meta name="description" content="This site provides tools for Sanskrit processing: dictionary search, morphology generation and analysis, segmentation, tagging and parsing.">
@@ -33,8 +33,9 @@
 <h3 class="c3">Version #VERSION [#DATE] (#LANG)<br>
 #CAPTION <!-- (since 01/09/2003) -->
 </h3>
-
+  
 <p>
+
 Welcome to the Sanskrit Heritage site.
 It provides various services for the computational treatment of Sanskrit.
 <p>
@@ -78,10 +79,28 @@ Please visit the <a href="manual.html">Reference manual</a> for learning how
 to use the various facilities.
 </p>
 <p>
-<strong><span class="red">*** NEW ***</span></strong>
-A l'attention des utilisateurs de langue française. Un cours élémentaire
-de sanskrit pour débutants, utilisant les ressources du site, est en cours
-de développement. Il est accessible <a href="COURSE/Lessons">ici</a>
+<!--<strong><span class="red">!!! NEW !!!</span></strong>-->
+An elementary Sanskrit course for beginners, using the site resources,
+may be found in its French version
+ <a href="COURSE/Lessons/lesson1.fr.html">ici</a> and in its English version
+ <a href="COURSE/Lessons/lesson1.en.html">here.</a>
+It allows you to read and understand a simple text, extracted from the
+Vikramacarita story. An updated version of the English lesson is available
+ <a href="COURSE/Lessons/HST_1.html">here.</a> <br>
+</p>
+<p>
+<strong><span class="red">!!! NEW !!!</span></strong>
+The story of Nala, taken from the 3rd book of Mahābhārata, is now available
+in the Corpus repository, section Nala. Its French translation is available
+<a href="COURSE/Lessons/lesson2.fr.html">here</a> as the second lesson on
+using our tools. 
+</p>
+<p>
+A more extensive course on using Hypertext Sanskrit Tools, developed jointly
+with the Sanskrit Studies Department of the University of Hyderabad,
+was taught remotely in Spring 2024. Its video contents may be accessed 
+<a href="https://sanskrit.uohyd.ac.in/IOE-2024/lecture_notes.html">here.</a>
+
 </p>
 
 <h2 class="b2"> Sanskrit Heritage dictionary in book form </h2>
@@ -455,17 +474,18 @@ as free software under the Gnu Lesser General Public License (LGPL) from the
 Please visit the <a href="http://sanskrit.inria.fr/zf/">Zen Forum</a> for
 announcements and discussions concerning the ZEN toolkit. -->
 
+<!-- Portal legacy closed
 <h2 class="b2"><img src="IMAGES/ganesh.jpg" alt="Ganesh">
 The Sanskrit Portal</h2>
 
 Please visit our <a href="portal.html">Sanskrit Portal</a>
-to find links to other Sanskrit resources.
+to find links to other Sanskrit resources. -->
 <p>
 <!--
 If you are reading this from a mirror site, don't forget to regularly update
 this server with the development Git site
 "https://gitlab.inria.fr/huet/Heritage_Platform". -->
-<!-- Credits for rt work on old versions - OBSOLETE
+<!-- Credits for art work on old versions - OBSOLETE
 <h2 class="b2"><img src="IMAGES/om1.jpg" alt="Om">
 Artwork credits</h2>
 
@@ -495,14 +515,14 @@ Artwork credits</h2>
 <tr><td>
 <a href="index.html"><strong>Top</strong></a> |
 <a href="DICO/index.#LANG.html"><strong>Index</strong></a> |
-<a href="DICO/index.#LANG.html#stemmer"><strong>Stemmer</strong></a> |
+<!-- <a href="DICO/index.#LANG.html#stemmer"><strong>Stemmer</strong></a> | -->
 <a href="DICO/grammar.#LANG.html"><strong>Grammar</strong></a> |
 <a href="DICO/sandhi.#LANG.html"><strong>Sandhi</strong></a> |
 <a href="DICO/reader.#LANG.html"><strong>Reader</strong></a> |
-<a href="DICO/corpus.#LANG.html"><b>Corpus</b></a> |
+<a href="DICO/corpus.#LANG.html"><b>Corpus</b></a> <!-- | OBS
 <a href="faq.#LANG.html"><strong>Help</strong></a> |
-<a href="portal.#LANG.html"><strong>Portal</strong></a>
-</td></tr><tr><td>© Gérard Huet 1994-2021</td></tr></table></td><td>
+<a href="portal.#LANG.html"><strong>Portal</strong></a> -->
+</td></tr><tr><td>© Gérard Huet 1994-2025</td></tr></table></td><td>
 <a href="http://www.inria.fr/">
 <img src="IMAGES/logo_inria.png" alt="Logo Inria" height="50"></a>
 <br></td></tr></table></div>

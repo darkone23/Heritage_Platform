@@ -9,7 +9,7 @@
 
 (* This program creates the page [reader_page] (Sanskrit Reader Interface) 
    invoking the CGI sktreader alias reader. Invoked without language argument,
-   it is itself the CGI [skt_heritage] invokable separately. *)
+   it is itself the CGI [skt_heritage] which may be invoked separately. *)
 
 (*i module Mk_reader_page = struct i*)
 
@@ -32,17 +32,11 @@ value set_cho () = Arg.parse
 value print_cache_policy cache_active = do
   { " Cache " |> ps 
   ; let options = 
-      [ (" On ","t",cache_active="t")  (* Cache active *)
+      [ (" On " ,"t",cache_active="t") (* Cache active *)
       ; (" Off ","f",cache_active="f") (* Ignore cache *)
       ] in
     option_select_default "cache" options |> pl
   }
-;
-value sanskrit_font_switch_default dft id =
-  option_select_default_id id "font" 
-       [ ("Devanagari","deva",dft="deva")  (* Devanagari UTF-8 *)
-       ; ("   IAST   ","roma",dft="roma")  (* Indological romanisation in UTF-8 *)
-       ]
 ;
 value reader_input_area_default =
   text_area "text" 1 screen_char_length 
@@ -59,7 +53,7 @@ value reader_page () = do
       ] in try 
     let env = create_env query in
     let url_encoded_input = get "text" env "" 
-    and url_encoded_mode  = get "mode" env "g"
+    and url_encoded_mode  = get "mode" env "f" (* V3.45 replaces "g" *)
     and url_encoded_topic = get "topic" env ""
     and st = get "st" env "t" (* default vaakya rather than isolated pada *)
     and us = get "us" env "f" (* default input sandhied *)
@@ -97,15 +91,8 @@ value reader_page () = do
         [ (" Unsandhied ","t",us="t") 
         ; ("  Sandhied  ","f",us="f") 
         ] |> pl
-(* option Simple deprecated TODO
- [; pl " Parser strength "
-  ; pl (option_select_default "cp"
-        [ ("  Full  ","t",cp="t") 
-        ; (" Simple ","f",cp="f")
-        ])] *)
-(* Sanskrit printer deva/roma *)
-  ; " Sanskrit display font" |> pl
-  ; sanskrit_font_switch_default font "font" |> ps
+  (* Sanskrit printer Deva/Roma *)
+  ; print_sanskrit_font_select font
   ; html_break |> pl  
   ; reader_input_area_default text |> ps
   ; html_break |> pl 

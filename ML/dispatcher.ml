@@ -4,7 +4,7 @@
 (*                                                                        *)
 (*                              Gérard Huet                               *)
 (*                                                                        *)
-(* ©2021 Institut National de Recherche en Informatique et en Automatique *)
+(* ©2022 Institut National de Recherche en Informatique et en Automatique *)
 (**************************************************************************)
 
 (* Dispatcher: Sanskrit Engine in 53 phases automaton (plus 2 fake ones) *)
@@ -122,7 +122,7 @@ value cached = (* potentially cached lexicon acquisitions *)
 (* initial: phases *)
 value initial =
    (* All phases but Ifc, Abso, Auxi, Auxiinv, Auxik, Auxiick, Lopa, Lopak. *)
-   [ Inde; Iicv; Iicc; Nouv; Nouc; Pron; A; An; Root; Kriv; Kric; Iikv; Iikc
+   [ Inde; Iicv; Iicc; Nouv; Nouc; Pron; (* A; An; *) Root; Kriv; Kric; Iikv; Iikc
    ; Peri; Pv; Pvkv; Pvkc; Iiv; Iivv; Iivc; Iiy; Inv; Ai; Ani 
    ; Absv; Absc; Inftu; Vocv; Vocc; Vokv; Vokc ] @ cached
 ;
@@ -131,22 +131,23 @@ value dispatch w = fun (* w is the current input word *)
   [ Nouv | Nouc | Pron | Inde | Abso | Auxi | Auxiinv | Auxik | Kama | Ifcv
   | Ifcc | Indifc | Kriv | Kric | Absv | Absc | Avy | Lopak | Root | Lopa 
   | Cache -> initial
-  | A -> if phantomatic w then [] else
+(* privative prefixes are no more generative except absolutives 
+ [| A -> if phantomatic w then [] else
          [ Iicc; Nouc; Iikc; Kric; Pvkc; Iivc; Vocc; Vokc ]
   | An -> if phantomatic w then [] else
           [ Iicv; Nouv; Iikv; Kriv; Pvkv; Iivv; Vocv; Vokv
-          ; A (* eg anak.sara anavadya *) ; An (* attested ? *) ] 
-  | Ai -> [ Absc; Pvc ]
-  | Ani -> [ Absv; Pvv ]
+          ; A (* eg anak.sara anavadya *) ; An (* attested ? *) ]] *)
+  | Ai -> [ Absc; Pvc ] (* negations of absolutives - eg ak.rtya apraapya *)
+  | Ani -> [ Absv; Pvv ](* id eg anaaruhya *)
     (* This assumes that privative prefixes cannot prefix Ifc forms 
        justified by \Pan{2,2,6} a-x only if x is a subanta. *)
   | Iicv | Iicc | Iikv | Iikc | Iiif | Auxiick | Cachei -> (* Compounding *)
-       [ Iicv; Iicc; Nouv; Nouc; A; An; Ifcv; Ifcc; Iikv; Iikc; Kriv; Kric
+       [ Iicv; Iicc; Nouv; Nouc; (* A; An; !*) Ifcv; Ifcc; Iikv; Iikc; Kriv; Kric
        ; Indifc; Pvkv; Pvkc; Iiif; Iivv; Iivc; Vocv; Vocc; Vokv; Vokc; Vocf ]
        @ cached
   | Pv -> if phantomatic w then [] else
           if amuitic w then [ Lopa ] else [ Root; Abso; Peri; Inftu ]
-  | Pvc | Pvv -> if phantomatic w then [] else [ Abso ]
+  | Pvc | Pvv -> if phantomatic w then [] else [ Abso ] (* for negative abso *)
   | Pvkc | Pvkv -> if phantomatic w then [] else
           if amuitic w then [ Lopak ] else [ Iikv; Iikc; Kriv; Kric; Vokv; Vokc ]
   | Iiv -> [ Auxi; Auxiinv ] (* as bhuu as and k.r finite, abs and inf  forms *)
@@ -158,7 +159,7 @@ value dispatch w = fun (* w is the current input word *)
       (* only chunk-final vocatives so no Iic overlap *) 
   | Inv -> [ Vocv; Vocc; Vokv; Vokc ] (* invocations before vocatives *) 
 (* Privative prefixes A and An are not allowed to prefix Ifc like a-dhii *)
-  | Noun | Iic | Iik | Voca | Krid | Vok
+  | Noun | Iic | Iik | Voca | Krid | Vok (* deprecated *)
   | Unknown -> failwith "Dispatcher anomaly"
   | ph -> failwith ("Dispatcher fake phase: " ^ string_of_phase ph) 
   ]
@@ -262,7 +263,7 @@ value extract_gana_pada = fun
            [ Presenta g _ -> (Some g,Active)
            | Presentm g _ -> (Some g,Middle)
            | Presentp _   -> (None,Passive)
-           | Conjug _ v | Perfut v -> (None,v)
+           | Conjug _ v   -> (None,v)
            ] in
        (conj,(o_gana,pada_of_voice voice))
   | Ind_verb _ _ -> raise Unvoiced (* could be refined *)
@@ -297,8 +298,11 @@ value valid_morph_pv_k pv krit_stem morph = (* morph of form [Part_form] *)
   let krit_infos = assoc_word bare_stem unique_kridantas in  
   let ((conj,krit),root) = look_up_homo homo krit_infos in try
   (* Asymmetry of treatment: conj is deduced from [krit_stem], not from morph *)
-  let gana_pada = extract_gana_pada_k krit in 
-  if conj=Primary then attested_verb gana_pada pv root else attested pv root 
+  let gana_pada = extract_gana_pada_k krit in match krit with 
+    [ Pprm _ -> True (* Pan{3,2,129} usual activity *)
+    | _ -> if conj=Primary then attested_verb gana_pada pv root 
+           else attested pv root 
+    ]
   with [ Unvoiced -> attested pv root ]
 ;
 value validate_pv pv root_form = 
@@ -326,9 +330,14 @@ value validate_pv_k pv krit_form (delta,_) = (* see [Morpho.print_inv_morpho] *)
   let (homo,bare_stem) = homo_undo krit_stem in 
   let krit_infos = assoc_word bare_stem unique_kridantas in 
   let ((conj,krit),root) = look_up_homo homo krit_infos in
-  try let gana_pada = extract_gana_pada_k krit in  
-      if conj=Primary then attested_verb gana_pada pv root else attested pv root
-  with [ Unvoiced -> attested pv root ]
+  match krit with 
+  [ Action_noun | Agent_noun -> False (* reserved for cvi on auxiliaries *)
+  | _ -> (* participles *)
+     try let gana_pada = extract_gana_pada_k krit in  
+         if conj=Primary then attested_verb gana_pada pv root 
+                         else attested pv root
+     with [ Unvoiced -> attested pv root ]
+  ]
 ;
 value autonomous_form root_form = 
   match Deco.assoc root_form morpho.roots with
@@ -350,10 +359,12 @@ value autonomous_form_k krid_form (delta,_) =
   let (homo,bare_stem) = homo_undo stem in
   let krid_infos = assoc_word bare_stem unique_kridantas in 
   let ((conj,krit),root) = look_up_homo homo krid_infos in 
-  try let gana_pada = extract_gana_pada_k krit in  
-      if conj=Primary then if filter_out_krit krit root then False
-                           else autonomous root 
-      else True
+  try let gana_pada = extract_gana_pada_k krit in match krit with 
+    [ Pprm _ -> True (* Pan{3,2,129} usual activity *)
+    | _ -> if conj=Primary then if filter_out_krit krit root then False
+                           else autonomous_root gana_pada root 
+           else True
+    ]
   with [ Unvoiced -> autonomous root ]
 ;
 (* Checks whether a verbal or participial form is attested/validated *)
@@ -362,6 +373,7 @@ value valid_morpho gen =
 ;
 (* This inspects a multitag in order to filter out pv-inconsistent taggings. *)
 (* It is used by Interface and Lexer for Reader and Parser *)
+(* should be used below instead of exists *)
 value trim_tags gen form pv tags = List.fold_right trim tags []
       where trim (delta,morphs) acc = (* tags : Morphology.multitag *)  
         let stem = Word.patch delta form in (* root or kridanta *)
@@ -393,19 +405,25 @@ value rec chop word = fun
      ]
   ]
 ; 
-value iic_phase = fun 
+value iic_phase = fun (* to unify with [Phases.ii_phase] *)
   [ Iicv | Iicc | Iikv | Iikc
   | Comp (_,Iikv) _ _ | Comp (_,Iikc) _ _ -> True
-  | _ -> False ]
+  | _ -> False
+  ]
 ;
 value apply_sandhi rleft right = fun
-    [ Euphony (w,ru,v) -> 
-       let rl = chop rleft ru
-       and r =  chop right v in List2.unstack rl (w @ r)
-    | Id -> List2.unstack rleft right
-    ]
+  [ Euphony (w,ru,v) -> 
+      let rl = chop rleft ru
+      and r =  chop right v in List2.unstack rl (w @ r)
+  | Id -> List2.unstack rleft right
+  ]
 ;
-
+(* for restricting periphrastic perfect to perfect auxiliary forms *)
+value perfect_tag = fun 
+   [ Verb_form (Primary,Conjug Perfect _) _ _ -> True
+   | _ -> False 
+   ]
+;
 (*i debug for validate -- vomit in interface 
 [value printout seg = 
   let print_seg (ph,w,_) = do 
@@ -577,7 +595,7 @@ value validate out = match out with
       and peri_form = Word.mirror rev_peri_form in
       match Deco.assoc peri_form morpho.peris with
       [ [] -> failwith ("Unknown peri_form: " ^ Canon.decode peri_form)
-      | tags -> let valid (delta,morphs) = 
+      | tags -> let valid (delta,_) = 
                    let root = Word.patch delta peri_form in
                    attested pv_str root in 
                 if List.exists valid tags then
@@ -586,14 +604,13 @@ value validate out = match out with
                    [ (Comp (Pv,Peri) pv peri_form,cpd_form,s) :: r ]
                 else []
       ]
-(*i | [ (Auxi, rev_auxi_form,s) :: [ (Peri,rev_peri_form,s') :: r ] ] ->
-      let auxi_form = Word.mirror tag rev_auxi_form in
-      let auxi_tags = Deco.assoc auxi_form morpho.auxis in 
-      let perfect_tags = filter_perfect auxi_tags in match perfect_tags with
-      [ [] -> []
-      | tags -> let form = apply_sandhi rev_peri_form auxi_form s' in 
-                [ (Peri_perf (rev_peri_form,tags),Word.mirror form,s) :: r ]
-      ] - TODO with new Peri_perf compounder - PB - accommoder les préverbes i*)
+  | [ (Auxi,rev_auxi_form,s) :: [ (Peri,rev_peri_form,s') :: r ] ] ->
+      let auxi_form = Word.mirror rev_auxi_form in
+      match Deco.assoc auxi_form morpho.auxis with
+      [ [] -> failwith ("Unknown auxi_form: " ^ Canon.decode auxi_form)
+      | tags -> let valid (_,morphs) = List.exists perfect_tag morphs in  
+                if List.exists valid tags then out else []
+      ] 
   | [ (Abso,rev_abso_form,s) :: [ (ph,prev,sv) :: r ] ] 
            when preverb_phase ph ->
       (* Takes care of absolutives in -ya *)
@@ -602,7 +619,7 @@ value validate out = match out with
       and abso_form = Word.mirror rev_abso_form in
       match Deco.assoc abso_form morpho.absya with
       [ [] -> failwith ("Unknown abs_form: " ^ Canon.decode abso_form)
-      | tags -> let valid (delta,morphs) = 
+      | tags -> let valid (delta,_) = 
                    let root = Word.patch delta abso_form in
                    attested pv_str root in 
                 if List.exists valid tags then
@@ -619,6 +636,8 @@ value validate out = match out with
   | [ (phase,_,_) :: [ (pv,_,_) :: _ ] ] when preverb_phase pv -> 
       let m = "validate: " ^ string_of_phase pv ^ " " ^ string_of_phase phase in 
       raise (Control.Anomaly m) (* all preverbs ought to have been processed *)
+    (* The following is a first try at filtering out illegal contiguity *)
+  | [ (Inde,[1 ; 36],_) :: [ (Inde,[1 ; 36],_) :: r ] ] -> [] (* no na-na *)
   | [ ((_,rform,_) as last) :: next ] -> let form = Word.mirror rform in
                                          prune_sa out form last next 
   ]
@@ -630,6 +649,141 @@ value sanitize_sa sa_check chunk = match chunk with
   | [ (Pron,[ 1; 48 ],_) :: _ ] (* ... sa *)  -> if sa_check then chunk else []
   | _ -> chunk
   ]
+;
+(* Auxiliary functions shred by Segmenter, Graph_segmenter and Segmenter2 *)
+
+(* Checking for legitimate Id sandhi *)
+(* Uses [sandhis_id] computed by [Compile_sandhi] *)
+(* Side-effect : [Data.public_sandhis_id_file] loaded at load time. *)
+value allowed_trans =
+  (Gen.gobble Data.public_sandhis_id_file:Deco.deco Word.word)
+;
+value check_id_sandhi revl first = 
+  let match_right allowed = not (List.mem [ first ] allowed) in
+  try match revl with
+      [ [] -> True
+      | [ last :: before ] -> 
+          (Phonetics.n_or_f last && Phonetics.vowel first) ||
+          (* we allow an-s transition with s vowel-initial, ignoring nn rules *)
+          (* this is necessary not to block transitions from the An phase *)
+          (Phonetics.vowel last && Phonetics.consonant first) || (* 8-04-21 *)
+          (* above line necessary for last=ii or uu and first=r (deviiraajyam) *)
+          let allowed1 = Deco.assoc [ last ] allowed_trans in
+          match before with
+             [ [] -> match_right allowed1 
+             | [ penu :: _ ] -> 
+               let allowed2 = Deco.assoc [ last :: [ penu ] ] allowed_trans in
+               match_right allowed2 && match_right allowed1 
+             ]
+      ]
+  with [ Not_found -> True ]
+;
+(* Examples: 
+   [let st1 = Encode.code_revstring "raamas"
+    and st2 = Encode.code_string "asti" in
+    check_id_sandhi st1 st2 = False
+ && let st1 = Encode.code_revstring "raamaa" 
+    and st2 = Encode.code_string "arati" in
+    check_id_sandhi st1 st2 = False
+ && let st1 = Encode.code_revstring "phalam" 
+    and st2 = Encode.code_string "icchaami" in
+    check_id_sandhi st1 st2 = True]
+*)
+
+(* Expands phantom-initial or lopa-initial segments *)
+(* phase [(aa_phase ph)] of "aa" is Pv for verbal ph, Pvkv for nominal ones *)
+value accrue ((ph,revword,rule) as segment) previous_segments =
+  match Word.mirror revword with 
+  [ [ -2 (* [-] *) :: r ] -> match previous_segments with 
+      [ [ (phase,pv,Euphony ([],u,[-2])) :: rest ] -> (* phase=Pv,Pvkv,Pvkc *)
+          let v = match r with [ [ 10 (* e *) :: _ ] -> [ 10 ] 
+                               | [ 12 (* o *) :: _ ] -> [ 12 ]
+                               | _ -> failwith "accrue anomaly" 
+                               ] in 
+          (* u is [ a ] or [ aa ], v is [ e ] or [ o ] *)
+          [ un_lopa_segment :: [ (phase,pv,Euphony (v,u,v )) :: rest ] ]
+            where un_lopa_segment = (un_lopa ph,Word.mirror r,rule) 
+       | _ -> failwith "accrue anomaly"
+       ]
+     (* Then phantom phonemes *)
+   | [ -3 (* *a *) :: r ] -> match previous_segments with
+       [ [ (phase,rword,Euphony (_,u,[-3])) :: rest ] -> 
+         let w = Phonetics.sandhi_aa u in
+         [ new_segment :: [ (aa_phase ph,[ 2 ],Euphony ([ 2 ],[ 2 ],[ 1 ] )) 
+                       :: [ (phase,rword,Euphony (w,u,[ 2 ])) :: rest ] ] ]
+           where new_segment = (ph,Word.mirror [ 1 :: r ],rule)
+       | _ -> failwith "accrue anomaly"
+       ]
+  | [ -9 (* *A *) :: r ] -> match previous_segments with
+       [ [ (phase,rword,Euphony (_,u,[-9])) :: rest ] -> 
+         let w = Phonetics.sandhi_aa u in
+         [ new_segment :: [ (aa_phase ph,[ 2 ],Euphony ([ 2 ],[ 2 ],[ 2 ] )) 
+                       :: [ (phase,rword,Euphony (w,u,[ 2 ])) :: rest ] ] ]
+           where new_segment = (ph,Word.mirror [ 2 :: r ],rule)
+       | _ -> failwith "accrue anomaly"
+       ]
+  | [ -4 (* *i *) :: r ] -> match previous_segments with
+       [ [ (phase,rword,Euphony (_,u,[ -4 ])) :: rest ] -> 
+         let w = Phonetics.sandhi_aa u in
+         [ new_segment :: [ (aa_phase ph,[ 2 ],Euphony ([ 10 ],[ 2 ],[ 3 ] )) 
+                       :: [ (phase,rword,Euphony (w,u,[ 2 ])) :: rest ] ] ]
+           where new_segment = (ph,Word.mirror [ 3 :: r ],rule)
+       | _ -> failwith "accrue anomaly"
+       ]
+  | [ -7 (* *I *) :: r ] -> match previous_segments with
+       [ [ (phase,rword,Euphony (_,u,[ -7 ])) :: rest ] -> 
+         let w = Phonetics.sandhi_aa u in
+         [ new_segment :: [ (aa_phase ph,[ 2 ],Euphony ([ 10 ],[ 2 ],[ 4 ] )) 
+                       :: [ (phase,rword,Euphony (w,u,[ 2 ])) :: rest ] ] ]
+           where new_segment = (ph,Word.mirror [ 4 :: r ],rule)
+       | _ -> failwith "accrue anomaly"
+       ]
+  | [ -5 (* *u *) :: r ] -> match previous_segments with
+       [ [ (phase,rword,Euphony (_,u,[ -5 ])) :: rest ] -> 
+         let w = Phonetics.sandhi_aa u in
+         [ new_segment :: [ (aa_phase ph,[ 2 ],Euphony ([ 12 ],[ 2 ],[ 5 ] )) 
+                       :: [ (phase,rword,Euphony (w,u,[ 2 ])) :: rest ] ] ]
+           where new_segment = (ph,Word.mirror [ 5 :: r ],rule)
+       | _ -> failwith "accrue anomaly"
+       ]
+  | [ -8 (* *U *) :: r ] -> match previous_segments with
+       [ [ (phase,rword,Euphony (_,u,[ -8 ])) :: rest ] -> 
+         let w = Phonetics.sandhi_aa u in
+         [ new_segment :: [ (aa_phase ph,[ 2 ],Euphony ([ 12 ],[ 2 ],[ 6 ] )) 
+                       :: [ (phase,rword,Euphony (w,u,[ 2 ])) :: rest ] ] ]
+           where new_segment = (ph,Word.mirror [ 6 :: r ],rule)
+       | _ -> failwith "accrue anomaly"
+       ]
+  | [ -6 (* *r *) :: r ] -> match previous_segments with
+       [ [ (phase,rword,Euphony (_,u,[ -6 ])) :: rest ] -> 
+         let w = Phonetics.sandhi_aa u in
+         [ new_segment :: [ (aa_phase ph,[ 2 ],Euphony ([ 2; 43 ],[ 2 ],[ 7 ] )) 
+                       :: [ (phase,rword,Euphony (w,u,[ 2 ])) :: rest ] ] ]
+           where new_segment = (ph,Word.mirror [ 7 :: r ],rule)
+       | _ -> failwith "accrue anomaly"
+       ]
+  | [ 123 (* *C *) :: r ] -> match previous_segments with
+       [ [ (phase,rword,Euphony (_,u,[ 123 ])) :: rest ] -> 
+         let w = Phonetics.sandhi_aa u in
+         [ new_segment :: [ (aa_phase ph,[ 2 ],Euphony ([ 2; 22; 23 ],[ 2 ], [ 23 ])) 
+                       :: [ (phase,rword,Euphony (w,u,[ 2 ])) :: rest ] ] ]
+           where new_segment = (ph,Word.mirror [ 23 :: r ],rule)
+       | _ -> failwith "accrue anomaly"
+       ]
+  | _ -> [ segment :: previous_segments ]
+  ]
+;
+(* access : phase -> word -> option (auto * word) *)
+value access phase = acc (transducer phase) []
+   where rec acc state w = fun
+      [ [] -> Some (state,w)  (* w is reverse of access input word *)
+      | [ c :: rest ] -> match state with
+           [ State (_,deter,_) -> match List2.ass c deter with 
+                [ Some next_state -> acc next_state [ c :: w ] rest
+                | None -> None 
+                ] 
+           ]
+      ]
 ;
 
 end;

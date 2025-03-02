@@ -2,9 +2,9 @@
 (*                                                                        *)
 (*                     The Sanskrit Heritage Platform                     *)
 (*                                                                        *)
-(*                              Idir Lankri                               *)
+(*                        Gérard Huet & Idir Lankri                       *)
 (*                                                                        *)
-(* ©2017 Institut National de Recherche en Informatique et en Automatique *)
+(* ©2021 Institut National de Recherche en Informatique et en Automatique *)
 (**************************************************************************)
 
 (* This program produces the pages corpus.html (Corpus interface).  *)
@@ -24,25 +24,28 @@ value permission_selection =
   let all_permissions = read_only_permissions @ other_permissions in
   selection (if corpus_read_only then read_only_permissions else all_permissions)
 ;
-value make lang =
+value make lang display_font =
   let title_str = "Sanskrit Corpus" in do
   { open_html_file (corpus_page lang) (title title_str)
   ; body_begin Chamois_back |> pl
   ; open_page_with_margin 15
   ; h1_title title_str |> print_title (Some lang)
   ; center_begin |> pl
-  ; cgi_begin corpus_manager_cgi "" ^
-    "Capacity: " ^
+  ; cgi_begin corpus_manager_cgi "" ^ "Capacity: " ^
     option_select_default Params.corpus_permission permission_selection ^ " " ^
-    submit_input "OK" ^
-    cgi_end |> pl
+    submit_input "Enter" |> pl
+  ; html_break |> pl 
+    (* Dec 2021: now we may select Sanskrit font and lexicon access *)
+  ; print_sanskrit_font_select display_font 
+  ; print_lexicon_select (lexicon_of lang) (* could be [Paths.default_lexicon] *)
+  ; cgi_end |> pl
   ; center_end |> pl
   ; close_page_with_margin ()
   ; close_html_file lang True
   }
 ;
 value main = do
-  { make English
-  ; make French
+  { make English "deva "
+  ; make French Paths.default_display_font
   }
 ;

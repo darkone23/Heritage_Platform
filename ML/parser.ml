@@ -203,13 +203,18 @@ value analyse query output =
   let groups = make_groups tagger output in
   let sorted_groups = sort_flatten groups in 
   let (top_groups, threshold) = truncate_groups sorted_groups in do
-  { pl (xml_empty "p")
+  { xml_empty "p" |> pl
+  (* Since the subsequent button contains the label SH selection, the following 
+     has been commented *)
+  (* ; span_begin Latin12 |> ps
+  ; "Final analysis: " |> pl
+  ; span_end |> ps *)
   ; let find_len = fun
       [ [ (_,[ a :: _ ]) :: _ ] -> List.length a
       | _ -> 0
       ] in
     pl (xml_empty_with_att "input" (* Final call to Parser for display *)
-           [ ("type","submit"); ("value","Submit"); 
+           [ ("type","submit"); ("value","SH Selection"); 
              ("onclick","unique('" ^ parser_cgi ^ "?" ^ query 
              ^ ";p=','" ^ string_of_int (find_len top_groups) ^ "')" )
            ] ^ html_break)
@@ -221,9 +226,10 @@ value analyse query output =
            | Roma -> "IAST"
            ] in 
        Scl_parser.print_scl scl_font [ List.rev segments ] 
-       else () 
+    else () 
   (*i DEBUG ; Sys.command "ls -l > /tmp/SKT_TEMP/junk" i*)
-  ; List.iter print_bucket top_groups  
+  (* Uncomment following for debugging parser
+ [; List.iter print_bucket top_groups  
   ; match threshold with      
     [ None -> ()
     | Some p -> do
@@ -231,7 +237,7 @@ value analyse query output =
        ; html_red ("Truncated penalty " ^ string_of_int p ^ " or more") |> ps
        ; html_break |> ps
        }
-    ]
+    ] ] *)
   }
 ;
 value print_sems word morphs = do  

@@ -2,7 +2,7 @@
 (*                                                                        *)
 (*                     The Sanskrit Heritage Platform                     *)
 (*                                                                        *)
-(*                              Gérard Huet                               *)
+(*                      Gérard Huet & Sriram Krishnan                     *)
 (*                                                                        *)
 (* ©2021 Institut National de Recherche en Informatique et en Automatique *)
 (**************************************************************************)
@@ -182,8 +182,38 @@ and preverb_phase = fun
 and krid_phase = fun [ Krid | Kric | Kriv -> True | _ -> False ]
 and ikrid_phase = fun [ Iik | Iikc | Iikv -> True | _ -> False ]
 and vkrid_phase = fun [ Vokc | Vokv -> True | _ -> False ]
-and ii_phase = fun [ Iicv | Iicc | Iikv | Iikc | A | An -> True | _ -> False ]
+and ii_phase = fun [ Iicv | Iicc | Iikv | Iikc | Iiif | A | An -> True 
+                   | _ -> False ]
 and is_cache = fun [ Cache | Cachei -> True | _ -> False ]
+;
+(* To check all possible non-final components of compounds *)
+value rec ii_component = fun 
+  [ Comp (_,ph) _ _ -> ii_component ph
+  | Iic | A | An | Iicv | Iicc | Iik | Iikv | Iikc | Iiif | Auxiick | Ai | Ani 
+        | Iiy | Iiv | Iivv | Iivc -> True
+  | _ -> False
+  ]
+;
+(* To check all possible final components of compounds. Here ifc is recognized 
+   but all other phases which could be final components are not recognized *)
+value rec ifc_component = fun 
+    [ Comp (_,ph) _ _ -> ifc_component ph
+    | Ifc -> True
+    | _ -> False
+    ]
+;
+(* To check if a word is a part of samasta pada according to its phase *)
+value compound_component phase = 
+  if ((ii_component phase) || (ifc_component phase)) then True 
+  else False
+;
+
+(* To provide the phase of a word if it is available *)
+value get_string_of_phase phase = 
+  match phase with
+  [ Comp (_,ph) _ _ -> string_of_phase ph
+  | phase -> string_of_phase phase
+  ]
 ;
 (* Needed as argument of [Morpho.print_inv_morpho] *)
 value rec generative = fun
@@ -195,22 +225,57 @@ value rec generative = fun
 
 open Html;
 value rec color_of_phase = fun
-  [ Noun | Lopak | Nouc | Nouv | Kriv | Kric | Krid | Auxik | Kama
-         | Cache -> Deep_sky 
+  [ Noun | Lopak | Nouc | Nouv | Kriv | Kric | Krid | Auxik | Cache -> Deep_sky 
   | Pron -> Light_blue
   | Root | Auxi | Lopa -> Carmin  
   | Inde | Indifc | Abso | Absv | Absc | Auxiinv | Ai | Ani | Avy -> Mauve
-  | Iic | A | An | Iicv | Iicc | Iik | Iikv | Iikc | Iiif 
-        | Auxiick | Cachei -> Yellow
+  | Iic | A | An | Iicv | Iicc | Iik | Iikv | Iikc | Auxiick | Cachei -> Yellow
+  | Iiif -> Kaki
   | Peri | Iiv | Iivv | Iivc | Inftu -> Orange
   | Iiy -> Pink 
   | Voca | Vocv | Vocc | Inv | Vok | Vokv | Vokc | Vocf -> Lawngreen
-  | Ifc | Ifcv | Ifcc -> Cyan
+  | Ifc | Ifcv | Ifcc | Kama -> Cyan
   | Unknown -> Grey
   | Comp (_,ph) _ _ -> color_of_phase ph 
   | Pv | Pvv | Pvc | Pvkc | Pvkv -> failwith "Illegal preverb segment" 
-(*i NB: unused background colors: Lavender Magenta Green Aquamarine Chamois i*)
+(*i NB: unused background colors: Lavender Magenta Green Chamois i*)
   ]
 ; 
+
+value string_of_color = fun 
+  [ Black -> "Black" 
+  | White -> "White" 
+  | Red -> "Red" 
+  | Blue -> "Blue" 
+  | Green -> "Green" 
+  | Yellow -> "Yellow" 
+  | Orange -> "Orange" 
+  | Deep_sky -> "Deep_sky" 
+  | Purple -> "Purple" 
+  | Grey -> "Grey" 
+  | Navy -> "Navy" 
+  | Cyan -> "Cyan" 
+  | Brown -> "Brown" 
+  | Carmin -> "Carmin" 
+  | Chamois -> "Chamois" 
+  | Broon -> "Broon" 
+  | Maroon -> "Maroon" 
+  | Kaki-> "Kaki" 
+  | Gold -> "Gold" 
+  | Magenta -> "Magenta" 
+  | Mauve -> "Mauve" 
+  | Pink -> "Pink" 
+  | Gris -> "Gris" 
+  | Lime -> "Lime" 
+  | Light_blue -> "Light_blue" 
+  | Lavender -> "Lavender" 
+  | Lawngreen -> "Lawngreen" 
+  | Deep_pink -> "Deep_pink" 
+  | Pale_rose -> "Pale_rose" 
+  | Beige -> "Beige" 
+  | Lilac -> "Lilac" 
+  | Violet -> "Violet" 
+  ]
+;
 
 end; (* Phases *)

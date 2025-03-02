@@ -4,7 +4,7 @@
 (*                                                                        *)
 (*                              Gérard Huet                               *)
 (*                                                                        *)
-(* ©2020 Institut National de Recherche en Informatique et en Automatique *)
+(* ©2024 Institut National de Recherche en Informatique et en Automatique *)
 (**************************************************************************)
 
 (* CGI-bin conjugation for computing root conjugations.                   *)
@@ -22,7 +22,7 @@ open Morphology; (* [inflected Verb_form] etc. *)
 open Conj_infos; (* [vmorph Causa Inten Desid root_infos] *)
 open Inflected; (* [roots.val indecls.val] etc. *)
 open Html;
-open Web; (* [ps pl font Deva Roma pr_font] etc. *)
+open Web; (* [ps pl font Deva Roma pr_font abort] etc. *)
 open Cgi;
 open Multilingual; (* [gentense tense_name captions] *)
 
@@ -183,9 +183,9 @@ value sort_out_v accu form = fun
           | Conjug (Aorist _) Active -> 
      (pa,pm,ia,im,oa,om,ea,em,fa,fm,pfa,pfm,[ t :: aa ],am,ap,ja,jm,jp,ba,bm,fpa,ps,ip,op,ep,ca,cm)
           | Conjug (Aorist _) Middle ->
-     (pa,pm,ia,im,oa,om,ea,em,fa,fm,pfa,pfm,aa,[ t :: am],ap,ja,jm,jp,ba,bm,fpa,ps,ip,op,ep,ca,cm)
+     (pa,pm,ia,im,oa,om,ea,em,fa,fm,pfa,pfm,aa,[ t :: am ],ap,ja,jm,jp,ba,bm,fpa,ps,ip,op,ep,ca,cm)
           | Conjug (Aorist _) Passive -> 
-     (pa,pm,ia,im,oa,om,ea,em,fa,fm,pfa,pfm,aa,am,[ t :: ap],ja,jm,jp,ba,bm,fpa,ps,ip,op,ep,ca,cm)
+     (pa,pm,ia,im,oa,om,ea,em,fa,fm,pfa,pfm,aa,am,[ t :: ap ],ja,jm,jp,ba,bm,fpa,ps,ip,op,ep,ca,cm)
           | Conjug (Injunctive _) Active -> 
      (pa,pm,ia,im,oa,om,ea,em,fa,fm,pfa,pfm,aa,am,ap,[ t :: ja ],jm,jp,ba,bm,fpa,ps,ip,op,ep,ca,cm)
           | Conjug (Injunctive _) Middle ->
@@ -196,7 +196,7 @@ value sort_out_v accu form = fun
      (pa,pm,ia,im,oa,om,ea,em,fa,fm,pfa,pfm,aa,am,ap,ja,jm,jp,[ t :: ba ],bm,fpa,ps,ip,op,ep,ca,cm)
           | Conjug Benedictive Middle -> 
      (pa,pm,ia,im,oa,om,ea,em,fa,fm,pfa,pfm,aa,am,ap,ja,jm,jp,ba,[ t :: bm ],fpa,ps,ip,op,ep,ca,cm)
-          | Perfut Active -> 
+          | Conjug Future2 Active -> 
      (pa,pm,ia,im,oa,om,ea,em,fa,fm,pfa,pfm,aa,am,ap,ja,jm,jp,ba,bm,[ t :: fpa ],ps,ip,op,ep,ca,cm)
           | Presentp Present -> 
      (pa,pm,ia,im,oa,om,ea,em,fa,fm,pfa,pfm,aa,am,ap,ja,jm,jp,ba,bm,fpa,[ t :: ps ],ip,op,ep,ca,cm)
@@ -242,26 +242,27 @@ and display_tense2 font tense la lm =
         ]
 ;
 value display_conjug font conj = do
-  { pl html_paragraph
-  ; pl (table_begin (centered Cyan))
-  ; ps tr_begin
-  ; ps th_begin 
-  ; ps (conjugation_name conj font)
-  ; ps th_end 
-  ; ps tr_end 
-  ; pl table_end (* Cyan *)
-  ; pl html_paragraph
+  { html_paragraph |> pl
+  ; table_begin (centered Cyan) |> pl
+  ; tr_begin |> ps
+  ; th_begin |> ps
+  ; conjugation_name conj font |> ps
+  ; th_end |> pl
+  ; tr_end |> pl 
+  ; table_end |> pl (* centered *)
+  ; html_paragraph |> pl
   }
-and display_subtitle title = do
-  { pl html_paragraph
-  ; pl (table_begin (centered Deep_sky))
-  ; ps tr_begin
-  ; ps th_begin
-  ; ps title
-  ; ps th_end 
-  ; ps tr_end 
-  ; pl table_end (* Centered *)
-  ; pl html_paragraph
+and display_subtitle title call_back = do
+  { html_paragraph |> pl
+  ; table_begin (centered Deep_sky) |> pl
+  ; tr_begin |> ps
+  ; th_begin |> ps
+  ; title |> ps
+  ; call_back |> ps
+  ; th_end |> ps 
+  ; tr_end |> ps 
+  ; table_end |> pl (* centered *)
+  ; html_paragraph |> pl
   }
 ;
 value display_inflected_v font 
@@ -313,7 +314,7 @@ value display_ind ind font = List.iter disp
   ; ps h3_end
   }
 ;
-value display_inflected_u font inf absya per abstva = do
+value display_indeclinables font inf absya per abstva = do
  { pl center_begin 
  ; display_ind (infinitive_caption font) font inf
  ; display_ind (absolutive_caption True font) font abstva
@@ -336,6 +337,7 @@ value encode_part = fun
   | Pfutm   -> "Pfutm" 
   | Pfutp _ -> "Pfutp" 
   | Action_noun -> "Act"
+  | Agent_noun  -> "Agt"
   ]
 ;
 (* inspired from [Print_html.decl_url] *)
@@ -534,20 +536,20 @@ value look_up_and_display font gana entry =
   and sort_out_u accu form = fun
   [ [ (_,morphs) ] -> List.fold_left (reorg form) accu morphs
       where reorg f (inf,absya,per,abstva) = fun
-        [ Ind_verb (c,Infi) when c=conj -> ([ (c,f) :: inf ],absya,per,abstva) 
-        | Ind_verb (c,Absoya) when c=conj -> (inf,[ (c,f) :: absya ],per,abstva) 
-        | Ind_verb (c,Perpft) when c=conj -> (inf,absya,[ (c,f) :: per ],abstva) 
-        | Abs_root c when c=conj -> (inf,absya,per,[ (c,f) :: abstva ]) 
-        | _ -> (inf,absya,per,abstva)
+      [ Ind_verb (c,Infi) when c=conj -> ([(c,f) :: inf ],absya,per,abstva) 
+      | Ind_verb (c,Absoya) when c=conj -> (inf,[(c,f) :: absya ],per,abstva) 
+      | Ind_verb (c,Perpft) when c=conj -> (inf,absya,[(c,f) :: per ],abstva) 
+      | Ind_verb (c,Absotvaa) when c=conj -> (inf,absya,per,[(c,f) :: abstva ])
+      | _ -> (inf,absya,per,abstva)
         ]
   | _ -> raise (Control.Fatal "Weird inverse map N")
   ]
   and init_u = ([],[],[],[])
   and buckets = Deco.fold sort_out_v init_v roots.val in do 
   (* Main [print_conjug] *)
-      { ps "1";display_conjug font conj
-      ; ps "2";display_inflected_v font buckets (* Display finite root forms *)
-      ; ps "3";pl html_paragraph
+      { display_conjug font conj
+      ; display_inflected_v font buckets (* Display finite root forms *)
+      ; pl html_paragraph
       ; pl center_begin (* Now display participial root forms *)
       ; pl (table_begin_style (centered Gris) [])
       ; ps tr_begin 
@@ -571,14 +573,14 @@ value look_up_and_display font gana entry =
           ; let (inf,_,_,abstvaa) = Deco.fold sort_out_u init_u abstvaa.val 
             and (_,absya,_,_)   = Deco.fold sort_out_u init_u absya.val
             and (_,_,per,_)     = Deco.fold sort_out_u init_u peri.val in
-            if absya=[] && per=[] && abstvaa=[] then () else do
+            if inf=[] && absya=[] && per=[] && abstvaa=[] then () else do
             (* Display indeclinable forms *)
             { pl center_begin 
             ; pl (table_begin_style (centered Gris) [])
             ; ps tr_begin
             ; ps th_begin
             ; ps (indeclinables_caption font)
-            ; display_inflected_u font inf absya per abstvaa 
+            ; display_indeclinables font inf absya per abstvaa 
             ; ps th_end
             ; ps tr_end
             ; pl table_end (* Gris *)
@@ -665,9 +667,10 @@ value resolve_homonym entry =
     | "rudh" 
     | "vas"
     | "vah"
-    | "v.r"
-    | "v.rdh"
     | "vi.s"
+    | "v.r"
+    | "v.rt"
+    | "v.rdh"
     | "zii" 
     | "zuc" 
     | "zubh" 
@@ -686,6 +689,7 @@ value resolve_homonym entry =
     | "svid" -> second entry
     | "maa" -> fourth entry
     | "arc" -> ".rc#1" (* link - bizarre *)
+    | "zvaa" | "zvi" -> "zuu" 
     | _ -> entry
     ]
   | 2 -> match entry with 
@@ -695,7 +699,7 @@ value resolve_homonym entry =
     | "duh"
     | "draa" (* ambiguous with ["draa#2"] *)
     | "dvi.s" 
-    | "praa"
+    | "praa" (* but "praa#1" missing *)
     | "praa.n"
     | "bhaa"
     | "maa"
@@ -727,6 +731,7 @@ value resolve_homonym entry =
     | "bhii"
     | "maa" (* ambiguous with ["maa#3"] *)
     | "vi.s"
+    | "v.rt"
     | "haa" -> first entry (* ambiguous with ["haa#2"] used in middle *)
     | "yu" -> second entry
     | _ -> entry
@@ -745,6 +750,7 @@ value resolve_homonym entry =
     | "mad" 
     | "yudh"
     | "zam" 
+    | "zu.s" 
     | "saa"
     | "sidh" 
     | "snih" 
@@ -778,6 +784,7 @@ value resolve_homonym entry =
     | "tud"
     | "diz"
     | "d.r"
+    | "dvi.s"
     | "pi"
     | "bhuj"
     | "muc"
@@ -820,6 +827,7 @@ value resolve_homonym entry =
     | "luu" -> first entry
     | "v.r" 
     | "h.r" -> second entry
+    | "grabh" -> "grah" (* generates both forms *)
     | _ -> entry
     ] 
   | 10 -> entry
@@ -846,7 +854,7 @@ value conjs_engine () = do
     and font = get "font" env Paths.default_display_font in 
     let ft = font_of_string font (* Deva vs Roma print *) 
     and translit = get "t" env "VH" (* DICO created in VH trans *)
-    and lex = get "lex" env "SH" (* default Heritage *) in 
+    and lex = get "lex" env Paths.default_lexicon in 
     let entry_tr = decode_url url_encoded_entry (* : string in translit *)
     and lang = language_of_string lex (* reference dictionary SH or MW *)
     and gana = match decode_url url_encoded_class with
@@ -861,9 +869,17 @@ value conjs_engine () = do
       | "9" -> 9
       | "10" -> 10
       | "11" -> 11 (* denominative verbs *)
+      | "0" -> 0 (* no present system *)
       | s -> raise (Control.Fatal ("Weird present class: " ^ s)) 
       ] 
     and encoding_function = Encode.switch_code translit 
+    (* Now we prepare a call-back for switching the font *)
+    and conj_url = Paths.cgi_dir_url ^ Paths.cgi_conj in
+    let invoke = conj_url ^ "?q=" ^ url_encoded_entry 
+               ^ ";c=" ^ url_encoded_class 
+               ^ ";lex=" ^ lex ^ ";font=" ^ (if ft=Deva then "roma" else "deva")
+    and switch = if ft=Deva then "Roma" else "Deva" in
+    let call_back = anchor Blue_ invoke switch
     and () = toggle_lexicon lex 
     and () = toggle_sanskrit_font ft in
     try let word = encoding_function entry_tr in
@@ -875,13 +891,13 @@ value conjs_engine () = do
         { let link = if known then Morpho_html.skt_anchor False entry 
                      else doubt (Morpho_html.skt_html entry) in 
           let subtitle = hyperlink_title ft link in
-          display_subtitle (h1_center subtitle)
+          display_subtitle (h1_center subtitle) call_back
         ; try look_up_and_display ft gana entry
           with [ Stream.Error s -> raise (Wrong s) ]
         ; page_end lang True
         } 
     with [ Stream.Error _ -> 
-             abort lang ("Illegal " ^ translit ^ " transliteration ") entry_tr ]
+           abort lang ("Illegal " ^ translit ^ " transliteration ") entry_tr ]
    with [ Not_found -> failwith "parameters q or c missing" ]
   }
 ;

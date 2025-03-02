@@ -196,8 +196,8 @@ and print_conjugation cg = do
   ; match cg with 
        [ Primary      -> "<prim/>" |> ps
        | Causative    -> "<ca/>"   |> ps
-       | Intensive    -> "<int/>"  |> ps
        | Desiderative -> "<des/>"  |> ps
+       | Intensive    -> "<int/>"  |> ps
        ]
   ; "</cj>" |> ps
   }
@@ -205,18 +205,19 @@ and print_pr_mode pr = do
   { "<md>" |> ps
   ; match pr with 
        [ Present    -> "<pr/>" |> ps
+       | Imperfect  -> "<im/>" |> ps
        | Imperative -> "<ip/>" |> ps
        | Optative   -> "<op/>" |> ps
-       | Imperfect  -> "<im/>" |> ps
        ]
   ; "</md>" |> ps
   }
 and print_tense = fun
-  [ Future       -> "<fut/>" |> ps
-  | Perfect      -> "<prf/>" |> ps
+  [ Perfect      -> "<prf/>" |> ps
   | Aorist k     -> do { "<aor" |> ps; kind_attr k |> ps; "/>" |> ps }
   | Injunctive k -> do { "<inj" |> ps; kind_attr k |> ps; "/>" |> ps }
   | Benedictive  -> "<ben/>" |> ps
+  | Future       -> "<fut/>" |> ps
+  | Future2      -> "<fut2/>" |> ps
   | Conditional  -> "<cnd/>" |> ps
   | Subjunctive  -> "<subj/>" |> ps
   ] 
@@ -239,7 +240,8 @@ value print_nominal = fun
   | Pfuta   -> do { "<pfut>" |> ps; print_voice Active; "</pfut>" |> ps }
   | Pfutm   -> do { "<pfut>" |> ps; print_voice Middle; "</pfut>" |> ps }
   | Pfutp k -> do { "<pfutp>" |> ps; pfutp_kind k |> ps; "</pfutp>" |> ps }
-  | _       -> "<act/>" |> ps (* action verbal nouns *)
+  | Action_noun  -> "<act/>" |> ps (* action verbal nouns *)
+  | Agent_noun   -> "<agt/>" |> ps (* action verbal nouns *)
   ]
 ;
 value print_system = fun
@@ -249,11 +251,11 @@ value print_system = fun
   | Presentm k pr -> do { "<prs" |> ps; pg k; ">" |> ps; 
                           print_pr_mode pr; "<atma/></prs>" |> ps }
   | Presentp pr   -> do { "<pas>" |> ps; print_pr_mode pr; "</pas>" |> ps }
-  | Perfut v      -> do { "<pef>" |> ps; print_voice v; "</pef>" |> ps }
+(* OBS  | Perfut v      -> do { "<pef>" |> ps; print_voice v; "</pef>" |> ps }*)
   ]
 and print_invar = fun
   [ Infi   -> "<inf/>" |> ps
-  | Absoya -> "<abs/>" |> ps
+  | Absoya | Absotvaa | Namul -> "<abs/>" |> ps
   | Perpft -> "<per/>" |> ps
   ]
 ;
@@ -306,14 +308,13 @@ value print_morph = fun
            | Prep -> "<prep/>" |> ps
            | Conj -> "<conj/>" |> ps
            | Tas  -> "<tasil/>" |> ps
-           | Abs  -> () (* redundant absolutive forms *)
+           | Abs  -> () (* redundant absolutive forms *) 
            | Infl -> () (* redundant inflected form *)
            | Nota -> () (* skipped grammatical notation *)
            ]
       ; "</uf>" |> ps
       }
   | Avyayaf_form -> "<avya/>" |> ps
-  | Abs_root c -> do { "<ab>" |> ps; print_conjugation c; "</ab>" |> ps }
   | Bare_stem | Avyayai_form -> "<iic/>" |> ps
   | Gati -> "<iiv/>" |> ps
   | Ind_verb m -> do { "<vu>" |> ps; print_modal m ; "</vu>" |> ps }

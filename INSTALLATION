@@ -5,11 +5,14 @@
 #                               Gérard Huet                                #
 #                                                                          #
 ############################################################################
-# Installation instructions                     Copyright Gérard Huet 2020 #
+# Installation instructions                     Copyright Gérard Huet 2022 #
 ############################################################################
 
-This is just a reminder for quick installation.
-A more complete installation procedure is described in file SETUP/INSTALL.
+This is just a reminder for quick installation on a UNIX platform, either
+Apple Mac or on versions of Linux such as Ubuntu.
+
+A more complete installation procedure is described in file SETUP/INSTALL,
+including installation on a Windows 11 station. 
 
 0) Install OCaml (>= 4.07). See http://ocaml.org for installation
 instructions.
@@ -24,7 +27,8 @@ for download and installation instructions. You may have to install
 the auxiliary package Ocamlbuild. 
 
 Beware: camlp4 is not updated at every Ocaml distribution, so you may have 
-to settle for not the most recent version of Ocaml.
+to settle for not the most recent version of Ocaml. Currently (Feb. 2023)
+we recommend Ocaml V4.10+1 
 
 1) Install the Zen computational linguistics library:
 
@@ -32,11 +36,11 @@ to settle for not the most recent version of Ocaml.
 
 2) Install the Heritage_resources package:
 
-   git clone https://gitlab.inria.fr/huet/Heritage_Resources.git
+   git clone -b development https://gitlab.inria.fr/huet/Heritage_Resources.git
 
 3) Install the Heritage_platform package:
 
-   git clone https://gitlab.inria.fr/huet/Heritage_Platform.git
+   git clone -b development https://gitlab.inria.fr/huet/Heritage_Platform.git
 
 4) Create your configuration file "config" in directory SETUP.
 

@@ -5,7 +5,7 @@
 #                         Gérard Huet & Pawan Goyal                        #
 #                                                                          #
 ############################################################################
-#TEMPLATE Makefile of SKT Platform      #DATE      Copyright Gérard Huet 2021 #
+#TEMPLATE Makefile of SKT Platform      #DATE      Copyright Gérard Huet 2024 #
 ############################################################################
 #WARN
 
@@ -104,6 +104,11 @@ DOC_IMAGES=IMAGES/lexer10.jpg IMAGES/lexer17.jpg IMAGES/lexer40.jpg # Copy GH
 # Scripts
 SCRIPTS=JAVASCRIPT/utf82VH.js JAVASCRIPT/dragtable.js JAVASCRIPT/util.js
 
+#Frequency files
+FREQS=$(DATA)/comp_freq.rem $(DATA)/pada_freq.rem $(DATA)/word_freq.rem \
+$(DATA)/comp_trans_freq.rem $(DATA)/pada_trans_freq.rem \
+$(DATA)/comp_morph_freq.rem $(DATA)/pada_morph_freq.rem
+
 # Next are copyright specific images
 SITE_IMAGES=IMAGES/yinyang.gif IMAGES/panini.jpg IMAGES/spin-new.gif \
 IMAGES/arrw01_06a.gif IMAGES/arrw01_16a.gif
@@ -198,6 +203,8 @@ CGITAGGER=skttagger$(CGIEXT)
 CGISANDHI=sktsandhier$(CGIEXT)
 # cgi name under which the sanskrit tagging summarizer is installed on the server
 CGIGRAPH=sktgraph$(CGIEXT)
+# cgi name under which the sanskrit tagging summarizer is installed on the server
+CGIGRAPH2=sktgraph2$(CGIEXT)
 # cgi name under which the user aid for unknown chunks is installed on the server
 CGIUSER=sktuser$(CGIEXT)
 # CGI name under which the corpus manager is installed on the server.
@@ -258,12 +265,15 @@ ML/make_automaton.ml ML/make_preverb_automaton.ml ML/automata_vector.mli \
 ML/make_transducers.ml ML/morpho_string.ml ML/morpho.ml ML/declension.ml \
 ML/conjugation.ml ML/indexer.ml ML/indexerd.ml ML/phases.ml ML/lemmatizer.ml \
 ML/auto.mli ML/load_transducers.ml ML/dispatcher.mli ML/dispatcher.ml \
-ML/segmenter.ml ML/load_morphs.ml ML/lexer.mli ML/lexer.ml \
-ML/rank.ml ML/scl_parser.ml ML/reader.ml ML/parser.ml ML/constraints.mli \
+ML/segmenter.ml ML/load_morphs.ml ML/lexer.mli ML/lexer.ml ML/rank.ml \
+ML/scl_parser.ml ML/reader.ml ML/parser.ml ML/constraints.mli \
 ML/constraints.ml ML/multilingual.ml ML/paraphrase.mli ML/paraphrase.ml \
-ML/bank_lexer.ml ML/checkpoints.ml ML/graph_segmenter.ml ML/interface.mli \
-ML/interface.ml ML/user_aid.ml ML/reset_caches.ml ML/restore_caches.ml \
-ML/params.mli ML/params.ml ML/make_xml_data.ml ML/segmenter_auxi.ml 
+ML/bank_lexer.ml ML/checkpoints.ml ML/morpho_analysis.ml ML/graph_segmenter.ml \
+ML/frequency.ml ML/segmenter2.ml ML/interface.mli ML/interface2.mli \
+ML/interface.ml ML/interface2.ml ML/user_aid.ml ML/reset_caches.ml \
+ML/restore_caches.ml ML/params.mli ML/params.ml ML/make_xml_data.ml \
+ML/segmenter_auxi.ml ML/make_word_freq.ml ML/make_trans_freq.ml \
+ML/make_morph_freq.ml
 
 # WEB package - HTML, HTTP, CGI ad-hoc utilities for Web interface
 WEB=ML/html.ml ML/web.ml ML/css.ml ML/cgi.ml ML/morpho_html.ml ML/chapters.ml \
@@ -333,7 +343,6 @@ $(DATA_LICENSES) $(DATA)/Makefile
 SOURCE=$(DOCSOURCE) $(DATASOURCE) $(ALLWEBSOURCES)
 
 # Miscellaneous documentation
-OBSOLETE_DOCS=DOC/sanskrit.pdf
 DOCS=DOC/sanskrit.pdf DOC/wsc.pdf DOC/tagger.pdf DOC/wcre.pdf DOC/coling.pdf \
 DOC/Mumbai.pdf DOC/Brown.pdf DOC/IWRIDL.pdf DOC/COLING_2012.pdf DOC/WSC13.pdf
 DOC_ML=DOC/Heritage_Platform.pdf
@@ -413,6 +422,12 @@ all:
 	$(MAKE) transducers
 	cd ML && $(MAKE) # make engine (testing the data stamp)
 	$(MAKE) web_services # then all Web services
+	cd ML && $(MAKE) make_word_freq
+	$(MAKE) word_freq
+	cd ML && $(MAKE) make_trans_freq
+	$(MAKE) trans_freq
+	cd ML && $(MAKE) make_morph_freq
+	$(MAKE) morph_freq
 
 # When master Makefile SETUP/MMakefile has been changed, do manually:
 new:
@@ -446,6 +461,7 @@ echo 'and cgi_decl = "$(CGIDECL)"'; \
 echo 'and cgi_conj = "$(CGICONJ)"'; \
 echo 'and cgi_sandhier = "$(CGISANDHI)"'; \
 echo 'and cgi_graph = "$(CGIGRAPH)"'; \
+echo 'and cgi_graph2 = "$(CGIGRAPH2)"'; \
 echo 'and cgi_user_aid = "$(CGIUSER)"'; \
 echo 'and cgi_corpus_manager = "$(CGIMANAGER)"'; \
 echo 'and cgi_save_corpus = "$(CGISAVECORPUS)"'; \
@@ -460,6 +476,35 @@ echo "value version=\"$(VERSION)\" and version_date=\"$(DATE)\";") > ML/version.
 
 transducers: 
 	ML/make_transducers 
+	
+word_freq:
+#	ML/make_word_freq
+	cd ML && $(MAKE) make_word_freq
+	ML/make_word_freq $(DATA)/comp_freq.tsv > $(DATA)/comp_freq_max.rem
+	ML/make_word_freq $(DATA)/pada_freq.tsv > $(DATA)/pada_freq_max.rem
+	ML/make_word_freq $(DATA)/word_freq.tsv > $(DATA)/word_freq_max.rem
+	$(ZEN)/dagify < $(DATA)/comp_freq_max.rem > $(DATA)/comp_freq.rem
+	$(ZEN)/dagify < $(DATA)/pada_freq_max.rem > $(DATA)/pada_freq.rem
+	$(ZEN)/dagify < $(DATA)/word_freq_max.rem > $(DATA)/word_freq.rem
+	rm $(DATA)/comp_freq_max.rem
+	rm $(DATA)/pada_freq_max.rem
+	rm $(DATA)/word_freq_max.rem
+	
+trans_freq:
+#	ML/make_trans_freq
+	cd ML && $(MAKE) make_trans_freq
+	ML/make_trans_freq $(DATA)/comp_trans_freq.tsv $(DATA)/comp_trans_freq.rem
+	ML/make_trans_freq $(DATA)/pada_trans_freq.tsv $(DATA)/pada_trans_freq.rem
+
+morph_freq:
+#	ML/make_morph_freq
+	cd ML && $(MAKE) make_morph_freq
+	ML/make_morph_freq $(DATA)/comp_morph_freq.tsv > $(DATA)/comp_freq_max.rem
+	ML/make_morph_freq $(DATA)/pada_morph_freq.tsv > $(DATA)/pada_freq_max.rem
+	$(ZEN)/dagify < $(DATA)/comp_freq_max.rem > $(DATA)/comp_morph_freq.rem
+	$(ZEN)/dagify < $(DATA)/pada_freq_max.rem > $(DATA)/pada_morph_freq.rem
+	rm $(DATA)/comp_freq_max.rem
+	rm $(DATA)/pada_freq_max.rem
 
 xml_data: 
 	cd ML && $(MAKE) make_xml_data
@@ -557,6 +602,7 @@ rm temp); done # NB: no citation in MW
 	cp -p $(AUTOMATA) $(SERVERPUBLICDIR)DATA # Sanskrit Engine data
 	cp -p $(DATAMW) $(SERVERPUBLICDIR)DATA # MW links
 	cp -p $(SCRIPTS) $(SERVERPUBLICDIR)DICO # Javascript in DICO dir
+	cp -p $(FREQS) $(SERVERPUBLICDIR)DATA # Frequency files in DATA dir
 #	cp $(DOC_IMAGES) $(SERVERPUBLICDIR)IMAGES
 
 releasecorpus:
@@ -605,13 +651,14 @@ stemmer: ML/lemmatizer
 sandhi: ML/sandhier
 	cp ML/sandhier $(CGIDIR)$(CGISANDHI)
 
-analyser: ML/reader ML/parser ML/interface ML/user_aid
+analyser: ML/reader ML/parser ML/interface ML/interface2 ML/user_aid
 #	cp ML/reader1cgi $(CGIDIR)$(CGIREADER)
 	cp ML/reader $(CGIDIR)$(CGIREADER)
 	cp ML/parser $(CGIDIR)$(CGIPARSER)
 	cp ML/interface $(CGIDIR)$(CGIGRAPH)
+	cp ML/interface2 $(CGIDIR)$(CGIGRAPH2)
 	cp ML/user_aid $(CGIDIR)$(CGIUSER)
-# following is special interface for Sanskrit Library invocation
+# following for corpus acquisition, invoked in Corpus_manager.add_sentence_form
 	cp ML/mk_reader_page $(CGIDIR)skt_heritage # $(CGIINTERFACE)
 # following is deprecated 
 #	cp ML/tagger $(CGIDIR)$(CGITAGGER)
@@ -640,6 +687,7 @@ install: #after distribution to host site: "./configure; make; sudo make install
 	SETUP/issudo.sh
 	test -f $(SERVERPUBLICDIR)DATA/cache.txt && echo "cold install" || $(MAKE) cold
 	cd $(SERVERPUBLICDIR)DATA; touch $(CACHES); chmod a+w $(CACHES)
+	touch $(SKTINSTALLDIR)ML/best_sol.txt; chmod 666 $(SKTINSTALLDIR)ML/best_sol.txt
 	$(MAKE) release
 	ML/restore_caches
 
@@ -700,12 +748,18 @@ course:
 	mkdir -p $(SERVERPUBLICDIR)COURSE/Images 
 	mkdir -p $(SERVERPUBLICDIR)COURSE
 #	cp -Rp $(SKTRESOURCES)COURSE $(SERVERPUBLICDIR)
+# uncomment previous line and delete all following when proper organization 
 	cp -p $(SKTRESOURCES)COURSE/Lessons/lesson1.fr.html $(SERVERPUBLICDIR)COURSE/Lessons/
+	cp -p $(SKTRESOURCES)COURSE/Lessons/HST_*.html $(SERVERPUBLICDIR)COURSE/Lessons/
 	cp -p $(SKTRESOURCES)COURSE/Lessons/lesson1.fr.html $(SERVERPUBLICDIR)COURSE/Lessons/index.html
+	cp -p $(SKTRESOURCES)COURSE/Lessons/lesson2.fr.html $(SERVERPUBLICDIR)COURSE/Lessons/
+	cp -p $(SKTRESOURCES)COURSE/Lessons/lesson1.en.html $(SERVERPUBLICDIR)COURSE/Lessons/
 	cp -p $(SKTRESOURCES)COURSE/Images/* $(SERVERPUBLICDIR)COURSE/Images
 	cp -p $(SKTRESOURCES)COURSE/Lessons/style.css $(SERVERPUBLICDIR)COURSE/Lessons/style.css
 
 
-SAVED_VERSION=332
-save: # saving sources of Heritage_Platform (after make clean in ML)
-	tar cvf ../ARCHIVE/Heritage_Platform_$(SAVED_VERSION).tar ML SITE JAVASCRIPT SETUP configure INSTALLATION DOC IMAGES README 
+SAVED_VERSION=364
+save: # saving sources of Heritage_Platform 
+	cd ML; make clean
+	tar cvf ../ARCHIVE/Heritage_Platform/Heritage_Platform_$(SAVED_VERSION).tar ML SITE JAVASCRIPT SETUP configure INSTALLATION DOC IMAGES README 
+	gzip ../ARCHIVE/Heritage_Platform/Heritage_Platform_$(SAVED_VERSION).tar

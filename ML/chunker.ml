@@ -4,7 +4,7 @@
 (*                                                                        *)
 (*                       Gérard Huet & Pawan Goyal                        *)
 (*                                                                        *)
-(* ©2021 Institut National de Recherche en Informatique et en Automatique *)
+(* ©2024 Institut National de Recherche en Informatique et en Automatique *)
 (**************************************************************************)
 (* Chunking mechanism for guessing partial padapatha from list of chunks. *)
 (* Essential for maximum parallelism in segmentation                      *)
@@ -27,7 +27,9 @@ exception Glue
 ;
 (* We raise Glue below when there are multiple ways to obtain the current break,
    in which case we do not profit of the sandhi hint. Furthermore, this is 
-   incomplete, notably when one of the sandhied forms is a vocative. *)
+   incomplete, notably when one of the sandhied forms is a vocative. 
+   We raise Hiatus when there is a potential hiatus situation, in which case 
+   the space is mandatory.*)
 (* Chunk [w] is adjusted for padapatha in view of next character [c] *)
 (* No attempt is made to change [c] and thus "tacchrutvaa" is not chunkable. *)
 (* This function defines the maximal separability of devanaagarii into chunks
@@ -57,12 +59,13 @@ value adjust c w = match Word.mirror w with
                         else w 
         | 1 (* a *) -> if c=1 then w else
                        if Phonetics.vowel c then raise Hiatus else w
-        | 2 (* aa *) -> if Phonetics.vowel c then raise Hiatus else 
-                        if Phonetics.elides_visarg_aa c then raise Hiatus else 
-                        w (* Hiatus except c surd unaspirate ? *) 
-                        (* NB "punaaramate" but not "punaa ramate" *)
-        | 4 (* ii *) (* possible visarga vanishes - but "n.rpatiiraajati" *) 
-        | 6 (* uu *) -> (* if c=43 (* r *) then raise Hiatus else *) w
+        | 2 (* aa *) -> if Phonetics.vowel c || Phonetics.elides_visarg_aa c 
+                           then raise Hiatus 
+                        else w (* NB "punaaramate" but not "punaa ramate" *)
+        | 4 (* ii *) (* possible visarga vanishes before r *)
+        | 6 (* uu *) -> if c=43 (* r *) (* "n.rpatiiraajati" for n.rpati.h *) 
+                           then raise Hiatus (* graama.nii raajanya.h *)
+                        else w 
         (* next 4 rules attempt to revert [last] to 'd' in view of [c] *)
         | 34 (* d *) -> if c=35 (* dh *) then raise Glue else 
                         if Phonetics.is_voiced c 
@@ -192,5 +195,16 @@ value chunker read_chunk l = (* l is list of chunks separated by blanks   *)
     ] in
   let (_,padas) = pad_rec l in padas
 ;
+
+(* Examples of hiatus (avasaana) in Velthuis notation :
+devaa api => devaa_api 
+devaa uktaa.h => devaa_uktaa.h
+deva ukta.h => deva_ukta.h
+deva icchati => deva_icchati 
+deva api => deva api (no hiatus deva voc) = deva!api 
+devo'pi => deva.h api
+devaapi => devaa api but not allowed for deva voc which must be chunk-final 
+devopi or deva'pi not recognized
+*)
 
 (*i end; i*)

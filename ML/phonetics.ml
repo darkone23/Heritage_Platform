@@ -105,6 +105,15 @@ and short c =
   else if vowel c then c
        else failwith "Bad arg to short"
 ;
+value shorten v = (* used for reduplicating vowel in perfect *)
+  if short_vowel v then v
+  else if long_vowel v then v-1
+  else match v with
+       [ 10 (* e *) | 12 (* ai *) -> 3 (* i *)
+       | 11 (* o *) | 13 (* au *) -> 5 (* u *)
+       | _ -> failwith "Bad arg to shorten"
+       ]
+;
 (* lengthens the final vowel of a (reverse) stem *)
 value lengthen = fun
   [ [ v :: r ] -> [ long v :: r ]
@@ -128,6 +137,13 @@ and aspirate  c = c = 49 (* h *)
 ;
 value stop c = c > 16 && c < 42 (* sparza occlusive Whitney surd *)
 (* stop c = velar c || palatal c || lingual c || dental c || labial c *)
+;
+(* aspirated stops Pr(j.s) sonores et début de Pr(khav) sourdes - unused *) 
+value aspirated = fun 
+  (* kh   gh   ch   jh  .th  .dh   th   dh   ph   bh *)
+   [ 18 | 20 | 23 | 25 | 28 | 30 | 33 | 35 | 38 | 40 -> True
+   | _ -> False
+   ]
 ;
 value nasal c = 
      c = 21 (* f *) || c =  26 (* ~n *) || c = 31 (* .n *) 
@@ -239,18 +255,9 @@ value aug = fun (* augment last phoneme of word *)
   | [] -> failwith "Empty stem in aug"   
   ]
 ;
-value light = fun (* light roots end in short vowel Pan{6,1,69} *)
+value light (* rstem *) = fun (* light roots end in short vowel Pan{6,1,69} *)
    [ [] -> failwith "light" 
    | [ c :: _ ] -> short_vowel c 
-   ]
-;
-(* For absolutives of roots gana 10 *) 
-value light_10 = fun (* light roots end in short vowel Pan{1,4,11} *) 
-   [ [] -> failwith "light_10"
-   | [ c :: r ] -> if vowel c then False (* ? *) else match r with
-       [ [] -> failwith "light_10_1"
-       | [ v :: _ ] -> short_vowel v 
-       ]
    ]
 ;
 (* Needed by [Verbs.record_part_m_th] for proper retroflexion of
@@ -316,6 +323,21 @@ value asandhi = fun
   ]
 ;
 value vowel_or_phantom c = vowel c || phantom c 
+;
+(* For treatment of phantom phonemes in Segmenter *)
+value sandhi_aa = fun
+  [ [ 48; 1 ] -> [ 1; 2 ] (* [a.h | aa -> a_aa] *) 
+  | [ 43; 1 ] -> [ 1; 48; 2 ] (* [ar | aa -> araa] *)
+  | [ c ] -> match c with
+             [ 1 | 2 -> [ 2 ]
+             | 3 | 4 -> [ 42; 2 ] (* "yaa" *)
+             | 5 | 6 -> [ 45; 2 ] (* "vaa" *)
+             | 7 | 8 | 48 -> [ 43; 2 ] (* "raa" *)
+             | 9 -> [ 44; 2 ] (* "laa" *)
+             | c -> [ voiced c; 2 ]
+             ]
+  | _ -> failwith "sandhi_aa"
+  ]
 ;
 (* Tests whether a word starts with a phantom phoneme (precooked aa-prefixed
    finite or participial or infinitive or abs-ya root form) 
@@ -450,7 +472,7 @@ value finalize rstem = match rstem with
        | 149 (* h' *) -> [ 17 (* k *) :: asp rest ] (* -duh {\R} -dhuk , impft doh adhok, etc. *)
        | 249 (* h'' *) -> [ 32 (* t *) :: asp rest ] 
        | c -> if vowel c then rstem 
-              else let s = Canon.rdecode rstem in
+              else let s = Canon.uniromcode (Word.mirror rstem) in 
                    failwith ("Illegal stem " ^ s ^ " (finalize)")
        ] 
   ]
